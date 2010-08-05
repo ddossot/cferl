@@ -20,7 +20,7 @@ caseless_get_proplist_value(Key, Proplist) when is_list(Key), is_list(Proplist) 
   proplists:get_value(string:to_lower(Key),
                       to_lower_case_keys(Proplist)).
 
-%% Private API
+%% Private functions
 to_lower_case_keys(Proplist) ->
   [{string:to_lower(K), V} || {K, V} <- Proplist].
 

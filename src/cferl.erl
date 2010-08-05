@@ -24,15 +24,15 @@ connect(Username, ApiKey) when is_list(Username), is_list(ApiKey) ->
                      
   handle_connect_result(Result).
   
-%% Private API
+%% Private functions
 handle_connect_result({ok, "204", ResponseHeaders, _ResponseBody}) ->
-  cferl_connection:new(cferl_lib:caseless_get_proplist_value("x-auth-token", ResponseHeaders),
-                       cferl_lib:caseless_get_proplist_value("x-storage-url", ResponseHeaders),
-                       cferl_lib:caseless_get_proplist_value("x-cdn-management-url", ResponseHeaders));
-                       
+  {ok, cferl_connection:new(cferl_lib:caseless_get_proplist_value("x-auth-token", ResponseHeaders),
+                            cferl_lib:caseless_get_proplist_value("x-storage-url", ResponseHeaders),
+                            cferl_lib:caseless_get_proplist_value("x-cdn-management-url", ResponseHeaders))};
+handle_connect_result({ok, "401", _, _}) ->
+  {error, unauthorized};
 handle_connect_result({ok, ResponseStatus, ResponseHeaders, ResponseBody}) ->
   {error, {unexpected_status, ResponseStatus, ResponseHeaders, ResponseBody}};
-
 handle_connect_result(Error = {error, _}) ->
   Error.
 
