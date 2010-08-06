@@ -27,11 +27,15 @@ cferl requires that the ssl and ibrowse applications be started prior to using i
 
 Creating a connection is the first step:
 
-    {ok, CloudFiles} = cferl:connect("your_user_name", "your_api_key").
+    > {ok, CloudFiles} = cferl:connect("your_user_name", "your_api_key").
 
 From there you can interact with file containers:
 
-    {ok, Containers} = CloudFiles:containers(),
-    Containers:size(),
-    Containers:names().
+    > {ok, Containers} = CloudFiles:containers().
+    
+    > Containers:size().
+    1
+    
+    > Containers:names().
+    [<<"cferl-test">>]
 

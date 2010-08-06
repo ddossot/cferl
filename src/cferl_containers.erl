@@ -5,7 +5,7 @@
 %%% Copyright (c) 2010 David Dossot
 %%%
 
--module(cferl_container, [Connection, Containers]).
+-module(cferl_containers, [Connection, Containers]).
 -author('David Dossot <david@dossot.net>').
 
 -export([size/0, names/0]).

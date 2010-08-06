@@ -29,7 +29,7 @@ do_containers(SelectionCriteria) when is_list(SelectionCriteria) ->
   handle_containers_result(Result).
 
 handle_containers_result({ok, "204", _, _}) ->
-  {ok, cferl_container:new(THIS, [])};
+  {ok, cferl_containers:new(THIS, [])};
 handle_containers_result({ok, "200", _, ResponseBody}) ->
   AtomizeKeysFun =
     fun({struct, Proplist}) ->
@@ -38,7 +38,7 @@ handle_containers_result({ok, "200", _, ResponseBody}) ->
     
   Containers = lists:map(AtomizeKeysFun,
                          mochijson2:decode(ResponseBody)), 
-  {ok, cferl_container:new(THIS, Containers)};
+  {ok, cferl_containers:new(THIS, Containers)};
 handle_containers_result(Other) ->
   {error, {unexpected_response, container_names_result, Other}}.
   
