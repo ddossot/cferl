@@ -4,4 +4,4 @@
 *.a
 .eunit
 erl_crash.dump
-
+deps

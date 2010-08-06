@@ -13,7 +13,7 @@ Simply run:
 
     ./rebar get-deps compile eunit
 
-Alternatively, you can run the integration tests:
+Afterwards, you can run the integration tests:
 
     ./int_tests
 
