@@ -11,7 +11,6 @@
 -export([start/0]).
 
 start() ->
-  application:start(sasl),
   application:start(ssl),
   application:start(ibrowse),
 
@@ -33,12 +32,11 @@ connect_test(Username, ApiKey) ->
   CloudFiles.
 
 container_tests(CloudFiles) ->
-  container_test(CloudFiles, CloudFiles:container_names()),
-  container_test(CloudFiles, CloudFiles:container_names(0, "")),
-  container_test(CloudFiles, CloudFiles:container_names(100, "a")).
+  container_test(CloudFiles:containers()),
+  container_test(CloudFiles:containers(0, "")),
+  container_test(CloudFiles:containers(100, "a")).
 
-container_test(_, {ok, []}) ->
-  io:format("No file container found~n");
-container_test(CloudFiles, {ok, Containers}) ->
-  io:format("Found file container names: ~p~n", [Containers]).
+container_test({ok, Containers}) ->
+  io:format("Found ~B container(s) named: ~p~n",
+            [Containers:size(), Containers:names()]).
 

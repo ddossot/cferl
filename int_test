@@ -1,4 +1,0 @@
-#!/bin/sh
-./rebar compile eunit
-erl -pa .eunit -pa deps/ibrowse/ebin -s cferl_integration_tests -noshell
-

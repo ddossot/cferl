@@ -5,6 +5,7 @@
          {modules, [
                      cferl,
                      cferl_connection,
+                     cferl_container,
                      cferl_lib,
                      mochijson2,
                      mochinum

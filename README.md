@@ -3,6 +3,7 @@ Rackspace Cloud Files Erlang Client
 
 > Version 0.1 - Currently under initial development
 
+
 Build
 -----
 
@@ -12,7 +13,13 @@ Simply run:
 
     ./rebar get-deps compile eunit
 
+Alternatively, you can run the integration tests:
 
+    ./int_tests
+
+Be sure to have your API key ready before doing so, as they will be needed.
+
+    
 Usage
 -----
 
@@ -24,5 +31,7 @@ Creating a connection is the first step:
 
 From there you can interact with file containers:
 
-    {ok, ContainerNames} = CloudFiles:container_names().
+    {ok, Containers} = CloudFiles:containers(),
+    Containers:size(),
+    Containers:names().
 
