@@ -6,10 +6,11 @@
                      cferl,
                      cferl_connection,
                      cferl_containers,
+                     cferl_container,
                      cferl_lib,
                      mochijson2,
                      mochinum
-		               ]},
+                   ]},
          {registered, []},
          {applications, [kernel,stdlib,sasl,ssl,ibrowse]},
          {env, []}

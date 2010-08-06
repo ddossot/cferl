@@ -38,4 +38,10 @@ From there you can interact with file containers:
     
     > Containers:names().
     [<<"cferl-test">>]
+    
+    > Container = Containers:get(<<"cferl-test">>).
+    > Container:name().
+    <<"cferl-test">>
+    
+    > {ok, NewContainer} = CloudFiles:new_container(<<"new-container">>).
 

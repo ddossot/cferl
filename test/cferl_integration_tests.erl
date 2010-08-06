@@ -32,11 +32,20 @@ connect_test(Username, ApiKey) ->
   CloudFiles.
 
 container_tests(CloudFiles) ->
-  container_test(CloudFiles:containers()),
-  container_test(CloudFiles:containers(0, "")),
-  container_test(CloudFiles:containers(100, "a")).
+  print_containers(CloudFiles:containers()),
+  print_containers(CloudFiles:containers("", 0)),
+  
+  {ok, Container} = CloudFiles:new_container(<<"foo">>),
+  io:format("Created container: ~p~n", [Container:name()]),
+  
+  print_containers(CloudFiles:containers("a", 100)),
+  
+  ok = Container:delete(),
+  io:format("Deleted container: ~p~n", [Container:name()]),
+  
+  print_containers(CloudFiles:containers()).
 
-container_test({ok, Containers}) ->
+print_containers({ok, Containers}) ->
   io:format("Found ~B container(s) named: ~p~n",
             [Containers:size(), Containers:names()]).
 
