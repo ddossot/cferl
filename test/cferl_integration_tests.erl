@@ -7,6 +7,7 @@
 
 -module(cferl_integration_tests).
 -author('David Dossot <david@dossot.net>').
+-include("cferl.hrl").
 
 -export([start/0]).
 
@@ -22,12 +23,9 @@ start() ->
 %% Tests
 run_tests(Username, ApiKey) ->
   CloudFiles = connect_test(Username, ApiKey),
-  print_info(CloudFiles:get_account_info()),
+  print_account_info(CloudFiles:get_account_info()),
   container_tests(CloudFiles),
   ok.
-
-print_info({ok, Info}) ->
-  io:format("Account info: ~p~n", [Info]).
   
 connect_test(Username, ApiKey) ->
   {error, unauthorized} = cferl:connect("_fake_user_name", "_fake_api_key"),
@@ -35,18 +33,23 @@ connect_test(Username, ApiKey) ->
   io:format("Connection successful~n"),
   CloudFiles.
 
+print_account_info({ok, Info}) ->
+  io:format("Account info: ~p~n", [Info]).
+
 container_tests(CloudFiles) ->
-  print_containers_info(CloudFiles:get_containers_info("", 0)),
+  % should return nothing
+  print_containers_info(CloudFiles:get_containers_info(#cf_query_args{limit=0})),
   
   {ok, Container} = CloudFiles:create_container(<<"foo">>),
   io:format("Created container: ~p~n", [Container:name()]),
   
-  print_containers_info(CloudFiles:get_containers_info("a", 100)),
+  print_containers_info(CloudFiles:get_containers_info(#cf_query_args{marker= <<"a">>})),
   
   ok = Container:delete(),
   io:format("Deleted container: ~p~n", [Container:name()]),
   
-  print_containers_info(CloudFiles:get_containers_info()).
+  print_containers_info(CloudFiles:get_containers_info()),
+  ok.
 
 print_containers_info({ok, ContainersInfo}) ->
   io:format("Found ~B container(s): ~p~n",

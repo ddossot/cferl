@@ -10,3 +10,5 @@
 
 -record(cf_account_info, {bytes_used, container_count}).
 -record(cf_container_info, {name, bytes, count}).
+
+-record(cf_query_args, {marker, limit}).

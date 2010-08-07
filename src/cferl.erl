@@ -22,17 +22,13 @@ connect(Username, ApiKey) when is_list(Username), is_list(ApiKey) ->
                      [{"X-Auth-User", Username}, {"X-Auth-Key", ApiKey}],
                      get),
                      
-  handle_connect_result(Result).
+  connect_result(Result).
   
 %% Private functions
-handle_connect_result({ok, "204", ResponseHeaders, _ResponseBody}) ->
+connect_result({ok, "204", ResponseHeaders, _ResponseBody}) ->
   {ok, cferl_connection:new(cferl_lib:caseless_get_proplist_value("x-auth-token", ResponseHeaders),
                             cferl_lib:caseless_get_proplist_value("x-storage-url", ResponseHeaders),
                             cferl_lib:caseless_get_proplist_value("x-cdn-management-url", ResponseHeaders))};
-handle_connect_result({ok, "401", _, _}) ->
-  {error, unauthorized};
-handle_connect_result({ok, ResponseStatus, ResponseHeaders, ResponseBody}) ->
-  {error, {unexpected_status, ResponseStatus, ResponseHeaders, ResponseBody}};
-handle_connect_result(Error = {error, _}) ->
-  Error.
+connect_result(Other) ->
+  cferl_lib:generic_handle_result(Other).
 

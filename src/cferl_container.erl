@@ -22,7 +22,7 @@ files() ->
 
 %% FIXME comment!
 delete() ->
-  Connection:send_storage_request(<<"/", Name/binary>>, delete),
+  Connection:send_storage_request(delete, <<"/", Name/binary>>, raw),
   %% FIXME handle 204, 404, 409 and other
   ok.
 
