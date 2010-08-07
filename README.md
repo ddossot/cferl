@@ -43,5 +43,5 @@ From there you can interact with file containers:
     > Container:name().
     <<"cferl-test">>
     
-    > {ok, NewContainer} = CloudFiles:new_container(<<"new-container">>).
+    > {ok, NewContainer} = CloudFiles:create_container(<<"new-container">>).
 

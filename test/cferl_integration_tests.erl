@@ -22,9 +22,13 @@ start() ->
 %% Tests
 run_tests(Username, ApiKey) ->
   CloudFiles = connect_test(Username, ApiKey),
+  print_info(CloudFiles:get_info()),
   container_tests(CloudFiles),
   ok.
 
+print_info({ok, Info}) ->
+  io:format("Account info: ~p~n", [Info]).
+  
 connect_test(Username, ApiKey) ->
   {error, unauthorized} = cferl:connect("_fake_user_name", "_fake_api_key"),
   {ok, CloudFiles} = cferl:connect(Username, ApiKey),
@@ -35,7 +39,7 @@ container_tests(CloudFiles) ->
   print_containers(CloudFiles:containers()),
   print_containers(CloudFiles:containers("", 0)),
   
-  {ok, Container} = CloudFiles:new_container(<<"foo">>),
+  {ok, Container} = CloudFiles:create_container(<<"foo">>),
   io:format("Created container: ~p~n", [Container:name()]),
   
   print_containers(CloudFiles:containers("a", 100)),

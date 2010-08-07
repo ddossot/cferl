@@ -9,10 +9,19 @@
 -author('David Dossot <david@dossot.net>').
 
 %% Public API
--export([containers/0, containers/2, new_container/1]).
+-export([get_info/0,
+         containers/0, containers/2, create_container/1]).
 
 %% Exposed for internal usage
 -export([send_storage_request/2]).
+
+%% FIXME comment + README
+get_info() ->
+  Result = send_storage_request("", head),
+  handle_get_info_result(Result).
+
+%% FIXME add: container_exists
+%% FIXME add: container
 
 %% FIXME comment!
 containers() ->
@@ -22,9 +31,11 @@ containers(Marker, Limit) when is_integer(Limit), is_list(Marker) ->
              ++ "&marker=" ++ ibrowse_lib:url_encode(Marker)).
 
 %% FIXME comment! -> {ok, Container::term()} | {error, already_existing} | {error, Cause::term()}
-new_container(Name) when is_binary(Name) ->
+create_container(Name) when is_binary(Name) ->
   Result = send_storage_request(<<"/", Name/binary>>, put),
   hanle_new_container_result(Name, Result).
+
+%% FIXME add: public_containers  
 
 %% FIXME comment!
 send_storage_request(PathAndQuery, Method)
@@ -34,10 +45,20 @@ send_storage_request(PathAndQuery, Method)
 send_storage_request(PathAndQuery, Method)
   when is_list(PathAndQuery), is_atom(Method) ->
     ibrowse:send_req(StorageUrl ++ PathAndQuery,
-                     [{"X-Auth-Token", AuthToken}],
+                     [{"User-Agent", "cferl (CloudFiles Erlang API)"},
+                     {"X-Auth-Token", AuthToken}],
                      Method).
 
 %% Private functions
+handle_get_info_result({ok, "204", ResponseHeaders, _}) ->
+  {ok, [{account_bytes_used,
+         list_to_integer(cferl_lib:caseless_get_proplist_value("x-account-bytes-used", ResponseHeaders))},
+        {account_container_count,
+         list_to_integer(cferl_lib:caseless_get_proplist_value("x-account-container-count", ResponseHeaders))}
+       ]};
+handle_get_info_result(Other) ->
+  {error, {unexpected_response, Other}}.
+
 do_containers(SelectionCriteria) when is_list(SelectionCriteria) ->
   QueryString = build_json_query_string(SelectionCriteria),
   Result = send_storage_request("?" ++ QueryString, get),

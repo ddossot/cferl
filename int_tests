@@ -1,4 +1,4 @@
 #!/bin/sh
-./rebar compile eunit
+./rebar clean compile eunit
 erl -boot start_sasl -config test/elog -pa .eunit -pa deps/ibrowse/ebin -s cferl_integration_tests -noshell
 
