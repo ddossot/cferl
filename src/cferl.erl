@@ -7,8 +7,8 @@
 
 -module(cferl).
 -author('David Dossot <david@dossot.net>').
-
 -include("cferl.hrl").
+
 -export([connect/2]).
 
 %% @doc Authenticate and open connection.
