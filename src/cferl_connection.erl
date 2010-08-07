@@ -25,14 +25,16 @@ get_account_info_result({ok, "204", ResponseHeaders, _}) ->
   {ok,
     #cf_account_info{ 
       bytes_used = 
-         list_to_integer(cferl_lib:caseless_get_proplist_value("x-account-bytes-used", ResponseHeaders)),
+         get_int_header("x-account-bytes-used", ResponseHeaders),
       container_count =
-         list_to_integer(cferl_lib:caseless_get_proplist_value("x-account-container-count", ResponseHeaders))
+         get_int_header("x-account-container-count", ResponseHeaders)
   }};
 get_account_info_result(Other) ->
   {error, {unexpected_response, Other}}.
 
 %% FIXME add: container_exists
+
+%% FIXME add: get_containers_name
 
 %% FIXME comment!
 get_containers_info() ->
@@ -47,16 +49,20 @@ get_containers_info(SelectionCriteria) when is_list(SelectionCriteria) ->
   get_containers_info_result(Result).
 
 get_containers_info_result({ok, "204", _, _}) ->
-  {ok, cferl_containers:new(THIS, [])};
+  {ok, []};
 get_containers_info_result({ok, "200", _, ResponseBody}) ->
   AtomizeKeysFun =
     fun({struct, Proplist}) ->
-      [{list_to_atom(binary_to_list(K)), V} || {K,V} <- Proplist]
+      #cf_container_info{
+        name = proplists:get_value(<<"name">>, Proplist),
+        bytes = proplists:get_value(<<"bytes">>, Proplist),
+        count = proplists:get_value(<<"count">>, Proplist)
+      }
     end,
     
-  Containers = lists:map(AtomizeKeysFun,
-                         mochijson2:decode(ResponseBody)), 
-  {ok, cferl_containers:new(THIS, Containers)};
+  ContainersInfo = lists:map(AtomizeKeysFun,
+                            mochijson2:decode(ResponseBody)), 
+  {ok, ContainersInfo};
 get_containers_info_result(Other) ->
   {error, {unexpected_response, Other}}.
 
@@ -93,4 +99,7 @@ build_json_query_string("") ->
   "format=json";
 build_json_query_string(Parameters) when is_list(Parameters) ->
   "format=json&" ++ Parameters.
+
+get_int_header(Name, Headers) when is_list(Headers) ->
+  list_to_integer(cferl_lib:caseless_get_proplist_value(Name, Headers)).
 

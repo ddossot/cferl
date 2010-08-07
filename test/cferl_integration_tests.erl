@@ -36,20 +36,19 @@ connect_test(Username, ApiKey) ->
   CloudFiles.
 
 container_tests(CloudFiles) ->
-  print_containers(CloudFiles:get_containers_info()),
-  print_containers(CloudFiles:get_containers_info("", 0)),
+  print_containers_info(CloudFiles:get_containers_info("", 0)),
   
   {ok, Container} = CloudFiles:create_container(<<"foo">>),
   io:format("Created container: ~p~n", [Container:name()]),
   
-  print_containers(CloudFiles:get_containers_info("a", 100)),
+  print_containers_info(CloudFiles:get_containers_info("a", 100)),
   
   ok = Container:delete(),
   io:format("Deleted container: ~p~n", [Container:name()]),
   
-  print_containers(CloudFiles:get_containers_info()).
+  print_containers_info(CloudFiles:get_containers_info()).
 
-print_containers({ok, Containers}) ->
-  io:format("Found ~B container(s) named: ~p~n",
-            [Containers:size(), Containers:names()]).
+print_containers_info({ok, ContainersInfo}) ->
+  io:format("Found ~B container(s): ~p~n",
+            [length(ContainersInfo), ContainersInfo]).
 

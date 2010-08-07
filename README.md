@@ -31,15 +31,15 @@ Creating a connection is the first step:
 
 From there you can interact with file containers:
 
-    > {ok, Containers} = CloudFiles:containers().
+    > {ok, ContainersInfo} = CloudFiles:get_containers_info().
     
-    > Containers:size().
+    > length(ContainersInfo:size()).
     1
     
-    > Containers:names().
-    [<<"cferl-test">>]
+    > ContainersInfo.
+    [{cf_container_info,<<"cferl-test">>,360,1}]
     
-    > Container = Containers:get(<<"cferl-test">>).
+    > Container = CloudFiles:get_container(<<"cferl-test">>).
     > Container:name().
     <<"cferl-test">>
     
