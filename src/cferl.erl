@@ -1,9 +1,12 @@
 %%%
+%%% @doc Rackspace Cloud Files Erlang Client
 %%% @author David Dossot <david@dossot.net>
 %%%
 %%% See LICENSE for license information.
 %%% Copyright (c) 2010 David Dossot
 %%%
+%%% @type cferl_connection(). Reference to the cferl_connection parameterized module.
+%%% @type cferl_error() = {error, not_found} | {error, unauthorized} | {error, {unexpected_response, Other}}.
 
 -module(cferl).
 -author('David Dossot <david@dossot.net>').
@@ -12,9 +15,9 @@
 -export([connect/2]).
 
 %% @doc Authenticate and open connection.
-%% @spec connect(Username::string(), ApiKey::string()) -> {ok, CloudFiles} | {error, Reason}
-%%   CloudFiles = term()
-%%   Reason = term()
+%% @spec connect(Username::string(), ApiKey::string()) -> {ok, CloudFiles} | Error
+%%   CloudFiles = cferl_connection()
+%%   Error = cferl_error()
 %% 
 connect(Username, ApiKey) when is_list(Username), is_list(ApiKey) ->
   Result = 

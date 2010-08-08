@@ -1,0 +1,4 @@
+@title cferl
+@doc Rackspace Cloud Files Erlang Client
+@author David Dossot <david@dossot.net>
+@copyright 2010 David Dossot

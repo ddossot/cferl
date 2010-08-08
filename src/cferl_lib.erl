@@ -1,5 +1,6 @@
 %%%
 %%% @author David Dossot <david@dossot.net>
+%%% @hidden
 %%%
 %%% See LICENSE for license information.
 %%% Copyright (c) 2010 David Dossot

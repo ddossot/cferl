@@ -17,7 +17,12 @@
 %% Exposed for internal usage
 -export([send_storage_request/3]).
 
-%% FIXME comment + README
+%% TODO demo in README
+%% @doc Retrieve account information.
+%% @spec get_account_info() -> {ok, AccountInfo} | Error
+%%   AccountInfo = cf_account_info()
+%%   Error = cferl_error()
+%% @type cf_account_info() = record().
 get_account_info() ->
   Result = send_storage_request(head, "", raw),
   get_account_info_result(Result).
@@ -80,6 +85,7 @@ create_container_result(_, Other) ->
 %% FIXME add: public_containers  
 
 %% FIXME comment!
+%% @hidden
 send_storage_request(Method, PathAndQuery, Accept)
   when is_atom(Method), is_binary(PathAndQuery), is_atom(Accept) ->
     send_storage_request(Method, binary_to_list(PathAndQuery), Accept);
