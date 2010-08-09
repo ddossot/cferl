@@ -17,7 +17,6 @@
 %% Exposed for internal usage
 -export([send_storage_request/3]).
 
-%% TODO demo in README
 %% @doc Retrieve account information.
 %% @spec get_account_info() -> {ok, AccountInfo} | Error
 %%   AccountInfo = cf_account_info()

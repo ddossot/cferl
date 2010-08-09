@@ -1,4 +1,5 @@
 %%%
+%%% @doc Integration tests and demo code generation.
 %%% @author David Dossot <david@dossot.net>
 %%%
 %%% See LICENSE for license information.
@@ -10,6 +11,11 @@
 -include("cferl.hrl").
 
 -export([start/0]).
+-define(PRINT_CODE(Code), io:format("    ~s~n", [Code])).
+-define(PRTFM_CODE(Format, Data), ?PRINT_CODE(io_lib:format(Format, Data))).
+-define(PRINT_CALL(Call),
+          io:format("    ~s.~n", [re:replace(??Call, " ", "", [global])]),
+          Call).
 
 start() ->
   application:start(ssl),
@@ -17,41 +23,55 @@ start() ->
 
   {ok, [Username]} = io:fread("Username : ", "~s"),
   {ok, [ApiKey]} = io:fread("API Key : ", "~s"),
+  io:format("~n"),
   run_tests(Username, ApiKey),
   init:stop().
   
 %% Tests
 run_tests(Username, ApiKey) ->
   CloudFiles = connect_test(Username, ApiKey),
-  print_account_info(CloudFiles:get_account_info()),
+  print_account_info(CloudFiles),
   container_tests(CloudFiles),
   ok.
   
 connect_test(Username, ApiKey) ->
   {error, unauthorized} = cferl:connect("_fake_user_name", "_fake_api_key"),
-  {ok, CloudFiles} = cferl:connect(Username, ApiKey),
-  io:format("Connection successful~n"),
+  ?PRINT_CODE("# Connect to Cloud Files"),
+  ?PRINT_CALL({ok, CloudFiles} = cferl:connect(Username, ApiKey)),
+  ?PRINT_CODE(""),
   CloudFiles.
 
-print_account_info({ok, Info}) ->
-  io:format("Account info: ~p~n", [Info]).
-
+print_account_info(CloudFiles) ->
+  ?PRINT_CODE("# Retrieve the account information record"),
+  ?PRINT_CALL({ok, Info} = CloudFiles:get_account_info()),
+  ?PRTFM_CODE("Info = #cf_account_info{bytes_used=~B, container_count=~B}",
+              [Info#cf_account_info.bytes_used, Info#cf_account_info.container_count]),
+  ?PRINT_CODE("").
+              
 container_tests(CloudFiles) ->
-  % should return nothing
-  print_containers_info(CloudFiles:get_containers_info(#cf_query_args{limit=0})),
+  % retrieve 0 container
+  {ok, []} = CloudFiles:get_containers_info(#cf_query_args{limit=0}),
   
-  {ok, Container} = CloudFiles:create_container(<<"foo">>),
-  io:format("Created container: ~p~n", [Container:name()]),
+  ?PRINT_CODE("# Retrieve information for all existing containers"),
+  ?PRINT_CALL({ok, ContainersInfo} = CloudFiles:get_containers_info()),
+  ?PRINT_CODE("# ContainersInfo is a list of #cf_container_info records"),
+  ?PRINT_CALL([Info|_]=ContainersInfo),
+  ?PRTFM_CODE("Info = #cf_container_info{name=~p, bytes=~B, count=~B}",
+              [Info#cf_container_info.name,
+               Info#cf_container_info.bytes,
+               Info#cf_container_info.count]),
+  ?PRINT_CODE(""),
   
-  print_containers_info(CloudFiles:get_containers_info(#cf_query_args{marker= <<"a">>})),
-  
-  ok = Container:delete(),
-  io:format("Deleted container: ~p~n", [Container:name()]),
-  
-  print_containers_info(CloudFiles:get_containers_info()),
-  ok.
+  ?PRINT_CODE("# Retrieve information for a maximum of 5 containers whose names start at cf"),
+  ?PRINT_CALL({ok, CfContainersInfo} = CloudFiles:get_containers_info(#cf_query_args{marker= <<"cf">>, limit=5})),
+  ?PRINT_CODE(""),
 
-print_containers_info({ok, ContainersInfo}) ->
-  io:format("Found ~B container(s): ~p~n",
-            [length(ContainersInfo), ContainersInfo]).
+  ?PRINT_CODE("# Create a new container"),
+  ?PRINT_CALL({ok, Container} = CloudFiles:create_container(<<"new_container">>)),
+  ?PRINT_CODE(""),
+    
+  ?PRINT_CODE("# Delete an existing container"),
+  ?PRINT_CALL(ok = Container:delete()),
+  ?PRINT_CODE(""),
+  ok.
 

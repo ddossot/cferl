@@ -16,8 +16,8 @@
 
 %% @doc Authenticate and open connection.
 %% @spec connect(Username, ApiKey) -> {ok, CloudFiles} | Error
-%%   Username::string() | binary()
-%%   ApiKey::string() | binary()
+%%   Username = string() | binary()
+%%   ApiKey = string() | binary()
 %%   CloudFiles = cferl_connection()
 %%   Error = cferl_error()
 connect(Username, ApiKey) when is_binary(Username), is_binary(ApiKey) ->

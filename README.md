@@ -4,8 +4,8 @@ Rackspace Cloud Files Erlang Client
 > Version 0.1 - Currently under initial development
 
 
-Build
------
+Building
+--------
 
 cferl relies on [rebar](http://bitbucket.org/basho/rebar/wiki/Home) for its build and dependency management.
 
@@ -13,35 +13,42 @@ Simply run:
 
     ./rebar get-deps compile eunit
 
-Afterwards, you can run the integration tests:
+Alternatively, you can run the integration tests which also builds everything:
 
     ./int_tests
 
 Be sure to have your API key ready before doing so, as they will be needed.
 
-    
-Usage
+To generate the cferl documentation, run:
+
+    ./rebar delete-deps doc
+
+Using
 -----
 
 cferl requires that the ssl and ibrowse applications be started prior to using it.
 
-Creating a connection is the first step:
+The following, which is the output when running the integration tests, demonstrates a typical usage of the API. Refer to the documentation for the complete reference.
 
-    > {ok, CloudFiles} = cferl:connect("your_user_name", "your_api_key").
-
-From there you can interact with file containers:
-
-    > {ok, ContainersInfo} = CloudFiles:get_containers_info().
+    # Connect to Cloud Files
+    {ok,CloudFiles}=cferl:connect(Username,ApiKey).
     
-    > length(ContainersInfo:size()).
-    1
+    # Retrieve the account information record
+    {ok,Info}=CloudFiles:get_account_info().
+    Info = #cf_account_info{bytes_used=360, container_count=1}
     
-    > ContainersInfo.
-    [{cf_container_info,<<"cferl-test">>,360,1}]
+    # Retrieve information for all existing containers
+    {ok,ContainersInfo}=CloudFiles:get_containers_info().
+    # ContainersInfo is a list of #cf_container_info records
+    [Info|_]=ContainersInfo.
+    Info = #cf_container_info{name=<<"cferl-test">>, bytes=360, count=1}
     
-    > Container = CloudFiles:get_container(<<"cferl-test">>).
-    > Container:name().
-    <<"cferl-test">>
+    # Retrieve information for a maximum of 5 containers whose names start at cf
+    {ok,CfContainersInfo}=CloudFiles:get_containers_info(#cf_query_args{marker=<<"cf">>,limit=5}).
     
-    > {ok, NewContainer} = CloudFiles:create_container(<<"new-container">>).
+    # Create a new container
+    {ok,Container}=CloudFiles:create_container(<<"new_container">>).
+    
+    # Delete an existing container
+    ok=Container:delete().
 
