@@ -1,4 +1,5 @@
 %%%
+%%% @doc Internal utilities
 %%% @author David Dossot <david@dossot.net>
 %%% @hidden
 %%%
@@ -10,7 +11,7 @@
 -author('David Dossot <david@dossot.net>').
 -include("cferl.hrl").
 
--export([generic_handle_result/1,
+-export([error_result/1,
          caseless_get_proplist_value/2, query_args_to_string/1]).
 
 -ifdef(TEST).
@@ -18,12 +19,15 @@
 -endif.
 
 %% FIXME comment
-%% FIXME unit test
-generic_handle_result({ok, "404", _, _}) ->
+%% @doc Authenticate and open connection.
+%% @spec error_result(HttpResponse) -> Error
+%%   HttpResponse = tuple()
+%%   Error = cferl_error()
+error_result({ok, "404", _, _}) ->
   {error, not_found};
-generic_handle_result({ok, "401", _, _}) ->
+error_result({ok, "401", _, _}) ->
   {error, unauthorized};
-generic_handle_result(Other) ->
+error_result(Other) ->
   {error, {unexpected_response, Other}}.
 
 %% @doc Get a value from a proplist with a case insentive search on key.

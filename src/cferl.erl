@@ -15,10 +15,14 @@
 -export([connect/2]).
 
 %% @doc Authenticate and open connection.
-%% @spec connect(Username::string(), ApiKey::string()) -> {ok, CloudFiles} | Error
+%% @spec connect(Username, ApiKey) -> {ok, CloudFiles} | Error
+%%   Username::string() | binary()
+%%   ApiKey::string() | binary()
 %%   CloudFiles = cferl_connection()
 %%   Error = cferl_error()
-%% 
+connect(Username, ApiKey) when is_binary(Username), is_binary(ApiKey) ->
+  connect(binary_to_list(Username),
+          binary_to_list(ApiKey));
 connect(Username, ApiKey) when is_list(Username), is_list(ApiKey) ->
   Result = 
     ibrowse:send_req("https://" ++ ?API_BASE_URL ++ ":443" ++ ?VERSION_PATH,
@@ -33,5 +37,5 @@ connect_result({ok, "204", ResponseHeaders, _ResponseBody}) ->
                             cferl_lib:caseless_get_proplist_value("x-storage-url", ResponseHeaders),
                             cferl_lib:caseless_get_proplist_value("x-cdn-management-url", ResponseHeaders))};
 connect_result(Other) ->
-  cferl_lib:generic_handle_result(Other).
+  cferl_lib:error_result(Other).
 

@@ -35,7 +35,7 @@ get_account_info_result({ok, "204", ResponseHeaders, _}) ->
          get_int_header("x-account-container-count", ResponseHeaders)
   }};
 get_account_info_result(Other) ->
-  cferl_lib:generic_handle_result(Other).
+  cferl_lib:error_result(Other).
 
 %% FIXME add: container_exists
 
@@ -66,7 +66,7 @@ get_containers_info_result({ok, "200", _, ResponseBody}) ->
                             mochijson2:decode(ResponseBody)), 
   {ok, ContainersInfo};
 get_containers_info_result(Other) ->
-  cferl_lib:generic_handle_result(Other).
+  cferl_lib:error_result(Other).
 
 %% FIXME add: get_container
 
@@ -80,7 +80,7 @@ create_container_result(Name, {ok, "201", _, _}) ->
 create_container_result(_, {ok, "202", _, _}) ->  
   {error, already_existing};
 create_container_result(_, Other) ->
-  cferl_lib:generic_handle_result(Other).
+  cferl_lib:error_result(Other).
   
 %% FIXME add: public_containers  
 
