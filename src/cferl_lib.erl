@@ -18,7 +18,6 @@
 -include_lib("eunit/include/eunit.hrl").
 -endif.
 
-%% FIXME comment
 %% @doc Authenticate and open connection.
 %% @spec error_result(HttpResponse) -> Error
 %%   HttpResponse = tuple()
