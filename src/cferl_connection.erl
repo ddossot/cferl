@@ -8,6 +8,7 @@
 %%% @type cferl_error() = {error, not_found} | {error, unauthorized} | {error, {unexpected_response, Other}}.
 %%% @type cf_account_info() = record(). Record of type cf_account_info.
 %%% @type cf_query_args() = record(). Record of type cf_query_args.
+%%% @type cf_container_info() = record(). Record of type cf_container_info.
 
 -module(cferl_connection, [AuthToken, StorageUrl, CdnManagementUrl]).
 -author('David Dossot <david@dossot.net>').
@@ -43,14 +44,14 @@ get_account_info_result(Other) ->
 
 %% FIXME add: container_exists
 
-%% @doc Retrieve the account information.
+%% @doc Retrieve all the containers names (within the limits imposed by Cloud Files server).
 %% @spec get_containers_names() -> {ok, Names::[binary()]} | Error
 %%   Error = cferl_error()
 get_containers_names() ->
   Result = send_storage_request(get, "", raw),
   get_containers_names_result(Result).
   
-%% @doc Retrieve the account information.
+%% @doc Retrieve the containers names filtered by the provided query arguments.
 %% @spec get_containers_names(QueryArgs) -> {ok, Names::[binary()]} | Error
 %%   QueryArgs = cf_query_args()
 %%   Error = cferl_error()
@@ -64,10 +65,17 @@ get_containers_names_result({ok, "200", _, ResponseBody}) ->
 get_containers_names_result(Other) ->
   cferl_lib:error_result(Other).
 
-%% FIXME comment!
+%% @doc Retrieve all the containers information (within the limits imposed by Cloud Files server).
+%% @spec get_containers_info() -> {ok, [cf_container_info()]} | Error
+%%   Error = cferl_error()
 get_containers_info() ->
   Result = send_storage_request(get, "", json),
   get_containers_info_result(Result).
+
+%% @doc Retrieve the containers information filtered by the provided query arguments.
+%% @spec get_containers_info(QueryArgs) -> {ok, [cf_container_info()]} | Error
+%%   QueryArgs = cf_query_args()
+%%   Error = cferl_error()
 get_containers_info(QueryArgs) when is_record(QueryArgs, cf_query_args) ->
   QueryString = cferl_lib:query_args_to_string(QueryArgs),
   Result = send_storage_request(get, QueryString, json),
