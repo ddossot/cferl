@@ -1,4 +1,5 @@
 %%%
+%%% @doc Rackspace Cloud Files Erlang Client
 %%% @author David Dossot <david@dossot.net>
 %%%
 %%% See LICENSE for license information.

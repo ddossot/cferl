@@ -1,9 +1,13 @@
 %%%
+%%% @doc Rackspace Cloud Files Erlang Client
 %%% @author David Dossot <david@dossot.net>
 %%%
 %%% See LICENSE for license information.
 %%% Copyright (c) 2010 David Dossot
 %%%
+%%% @type cferl_error() = {error, not_found} | {error, unauthorized} | {error, {unexpected_response, Other}}.
+%%% @type cf_account_info() = record(). Record of type cf_account_info.
+%%% @type cf_query_args() = record(). Record of type cf_query_args.
 
 -module(cferl_connection, [AuthToken, StorageUrl, CdnManagementUrl]).
 -author('David Dossot <david@dossot.net>').
@@ -11,20 +15,21 @@
 
 %% Public API
 -export([get_account_info/0,
+         get_containers_names/0, get_containers_names/1,
          get_containers_info/0, get_containers_info/1,
          create_container/1]).
 
 %% Exposed for internal usage
 -export([send_storage_request/3]).
 
-%% @doc Retrieve account information.
+%% @doc Retrieve the account information.
 %% @spec get_account_info() -> {ok, AccountInfo} | Error
 %%   AccountInfo = cf_account_info()
 %%   Error = cferl_error()
-%% @type cf_account_info() = record().
 get_account_info() ->
   Result = send_storage_request(head, "", raw),
   get_account_info_result(Result).
+  
 get_account_info_result({ok, "204", ResponseHeaders, _}) ->
   {ok,
     #cf_account_info{ 
@@ -38,7 +43,26 @@ get_account_info_result(Other) ->
 
 %% FIXME add: container_exists
 
-%% FIXME add: get_containers_name
+%% @doc Retrieve the account information.
+%% @spec get_containers_names() -> {ok, Names::[binary()]} | Error
+%%   Error = cferl_error()
+get_containers_names() ->
+  Result = send_storage_request(get, "", raw),
+  get_containers_names_result(Result).
+  
+%% @doc Retrieve the account information.
+%% @spec get_containers_names(QueryArgs) -> {ok, Names::[binary()]} | Error
+%%   QueryArgs = cf_query_args()
+%%   Error = cferl_error()
+get_containers_names(QueryArgs) when is_record(QueryArgs, cf_query_args) ->
+  QueryString = cferl_lib:query_args_to_string(QueryArgs),
+  Result = send_storage_request(get, QueryString, raw),
+  get_containers_names_result(Result).
+
+get_containers_names_result({ok, "200", _, ResponseBody}) ->
+  {ok, [list_to_binary(Name) || Name <- string:tokens(ResponseBody, "\n")]};
+get_containers_names_result(Other) ->
+  cferl_lib:error_result(Other).
 
 %% FIXME comment!
 get_containers_info() ->
@@ -81,7 +105,7 @@ create_container_result(_, {ok, "202", _, _}) ->
 create_container_result(_, Other) ->
   cferl_lib:error_result(Other).
   
-%% FIXME add: public_containers  
+%% FIXME add: get_public_containers ?names ?info  
 
 %% FIXME comment!
 %% @hidden

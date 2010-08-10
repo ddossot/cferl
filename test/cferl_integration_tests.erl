@@ -36,7 +36,7 @@ run_tests(Username, ApiKey) ->
   
 connect_test(Username, ApiKey) ->
   {error, unauthorized} = cferl:connect("_fake_user_name", "_fake_api_key"),
-  ?PRINT_CODE("# Connect to Cloud Files"),
+  ?PRINT_CODE("# Connect to Cloud Files (warning: the underlying authentication toke will only last for 24 hours!)"),
   ?PRINT_CALL({ok, CloudFiles} = cferl:connect(Username, ApiKey)),
   ?PRINT_CODE(""),
   CloudFiles.
@@ -49,10 +49,18 @@ print_account_info(CloudFiles) ->
   ?PRINT_CODE("").
               
 container_tests(CloudFiles) ->
+  ?PRINT_CODE("# Retrieve names of all existing containers (within the limits imposed by Cloud Files server)"),
+  ?PRINT_CALL({ok, Names} = CloudFiles:get_containers_names()),
+  ?PRTFM_CODE("Names=~p~n", [Names]),
+  
+  ?PRINT_CODE("# Retrieve names of a maximum of 3 existing containers"),
+  ?PRINT_CALL({ok, ThreeNames} = CloudFiles:get_containers_names(#cf_query_args{limit=3})),
+  ?PRTFM_CODE("ThreeNames=~p~n", [ThreeNames]),
+  
   % retrieve 0 container
   {ok, []} = CloudFiles:get_containers_info(#cf_query_args{limit=0}),
   
-  ?PRINT_CODE("# Retrieve information for all existing containers"),
+  ?PRINT_CODE("# Retrieve information for all existing containers (within the server limits)"),
   ?PRINT_CALL({ok, ContainersInfo} = CloudFiles:get_containers_info()),
   ?PRINT_CODE("# ContainersInfo is a list of #cf_container_info records"),
   ?PRINT_CALL([Info|_]=ContainersInfo),
