@@ -58,10 +58,10 @@ container_tests(CloudFiles) ->
   ?PRTFM_CODE("ThreeNames=~p~n", [ThreeNames]),
   
   % retrieve 0 container
-  {ok, []} = CloudFiles:get_containers_info(#cf_query_args{limit=0}),
+  {ok, []} = CloudFiles:get_containers_details(#cf_query_args{limit=0}),
   
   ?PRINT_CODE("# Retrieve information for all existing containers (within the server limits)"),
-  ?PRINT_CALL({ok, ContainersInfo} = CloudFiles:get_containers_info()),
+  ?PRINT_CALL({ok, ContainersInfo} = CloudFiles:get_containers_details()),
   ?PRINT_CODE("# ContainersInfo is a list of #cf_container_info records"),
   ?PRINT_CALL([Info|_]=ContainersInfo),
   ?PRTFM_CODE("Info = #cf_container_info{name=~p, bytes=~B, count=~B}",
@@ -71,7 +71,7 @@ container_tests(CloudFiles) ->
   ?PRINT_CODE(""),
   
   ?PRINT_CODE("# Retrieve information for a maximum of 5 containers whose names start at cf"),
-  ?PRINT_CALL({ok, CfContainersInfo} = CloudFiles:get_containers_info(#cf_query_args{marker= <<"cf">>, limit=5})),
+  ?PRINT_CALL({ok, CfContainersInfo} = CloudFiles:get_containers_details(#cf_query_args{marker= <<"cf">>, limit=5})),
   ?PRINT_CODE(""),
 
   ?PRINT_CODE("# Check a container's existence"),

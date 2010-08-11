@@ -17,7 +17,7 @@
 %% Public API
 -export([get_account_info/0,
          get_containers_names/0, get_containers_names/1,
-         get_containers_info/0, get_containers_info/1,
+         get_containers_details/0, get_containers_details/1,
          container_exists/1, create_container/1]).
 
 %% Exposed for internal usage
@@ -63,26 +63,25 @@ get_containers_names_result({ok, "200", _, ResponseBody}) ->
 get_containers_names_result(Other) ->
   cferl_lib:error_result(Other).
 
-%% FIXME rename into get_containers_details
 %% @doc Retrieve all the containers information (within the limits imposed by Cloud Files server).
-%% @spec get_containers_info() -> {ok, [cf_container_info()]} | Error
+%% @spec get_containers_details() -> {ok, [cf_container_info()]} | Error
 %%   Error = cferl_error()
-get_containers_info() ->
+get_containers_details() ->
   Result = send_storage_request(get, "", json),
-  get_containers_info_result(Result).
+  get_containers_details_result(Result).
 
 %% @doc Retrieve the containers information filtered by the provided query arguments.
-%% @spec get_containers_info(QueryArgs) -> {ok, [cf_container_info()]} | Error
+%% @spec get_containers_details(QueryArgs) -> {ok, [cf_container_info()]} | Error
 %%   QueryArgs = cf_query_args()
 %%   Error = cferl_error()
-get_containers_info(QueryArgs) when is_record(QueryArgs, cf_query_args) ->
+get_containers_details(QueryArgs) when is_record(QueryArgs, cf_query_args) ->
   QueryString = cferl_lib:query_args_to_string(QueryArgs),
   Result = send_storage_request(get, QueryString, json),
-  get_containers_info_result(Result).
+  get_containers_details_result(Result).
 
-get_containers_info_result({ok, "204", _, _}) ->
+get_containers_details_result({ok, "204", _, _}) ->
   {ok, []};
-get_containers_info_result({ok, "200", _, ResponseBody}) ->
+get_containers_details_result({ok, "200", _, ResponseBody}) ->
   AtomizeKeysFun =
     fun({struct, Proplist}) ->
       #cf_container_info{
@@ -95,7 +94,7 @@ get_containers_info_result({ok, "200", _, ResponseBody}) ->
   ContainersInfo = lists:map(AtomizeKeysFun,
                             mochijson2:decode(ResponseBody)), 
   {ok, ContainersInfo};
-get_containers_info_result(Other) ->
+get_containers_details_result(Other) ->
   cferl_lib:error_result(Other).
 
 %% @doc Test the existence of a container.
