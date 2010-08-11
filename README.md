@@ -54,8 +54,12 @@ The following, which is the output when running the integration tests, demonstra
     # Retrieve information for a maximum of 5 containers whose names start at cf
     {ok,CfContainersInfo}=CloudFiles:get_containers_info(#cf_query_args{marker=<<"cf">>,limit=5}).
     
+    # Check a container's existence
+    false=CloudFiles:container_exists(<<"new_container">>).
+    
     # Create a new container
     {ok,Container}=CloudFiles:create_container(<<"new_container">>).
+    true=CloudFiles:container_exists(<<"new_container">>).
     
     # Delete an existing container
     ok=Container:delete().

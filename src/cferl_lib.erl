@@ -35,7 +35,8 @@ caseless_get_proplist_value(Key, Proplist) when is_list(Key), is_list(Proplist) 
   proplists:get_value(string:to_lower(Key),
                       to_lower_case_keys(Proplist)).
 
-%% FIXME comment
+%% @doc Turn a cf_query_args record into a ULR encoded query string.
+%% @spec query_args_to_string(QueryArgs::record()) -> string()
 query_args_to_string(#cf_query_args{marker=Marker, limit=Limit}) ->
   QueryElements =
     [

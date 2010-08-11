@@ -12,22 +12,24 @@
 %% Public API
 -export([name/0, files/0, delete/0, new_file/1]).
 
-%% FIXME comment!
+%% TODO comment!
 name() ->
   Name.
+  
+%% TODO add bytes() count() refresh()
 
-%% FIXME comment!
+%% TODO comment!
 files() ->
   %% FIXME implement!
   [].
 
-%% FIXME comment!
+%% TODO comment!
 delete() ->
   Connection:send_storage_request(delete, <<"/", Name/binary>>, raw),
   %% FIXME handle 204, 404, 409 and other
   ok.
 
-%% FIXME comment!
+%% TODO comment!
 new_file(Name) when is_binary(Name) ->
   %% FIXME implement!
   ok.

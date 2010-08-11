@@ -74,10 +74,18 @@ container_tests(CloudFiles) ->
   ?PRINT_CALL({ok, CfContainersInfo} = CloudFiles:get_containers_info(#cf_query_args{marker= <<"cf">>, limit=5})),
   ?PRINT_CODE(""),
 
+  ?PRINT_CODE("# Check a container's existence"),
+  ?PRINT_CALL(false = CloudFiles:container_exists(<<"new_container">>)),
+  ?PRINT_CODE(""),
+
   ?PRINT_CODE("# Create a new container"),
   ?PRINT_CALL({ok, Container} = CloudFiles:create_container(<<"new_container">>)),
   ?PRINT_CODE(""),
-    
+  ?PRINT_CALL(true = CloudFiles:container_exists(<<"new_container">>)),
+  ?PRINT_CODE(""),
+  
+  % TODO show Container:name() count() bytes()
+  
   ?PRINT_CODE("# Delete an existing container"),
   ?PRINT_CALL(ok = Container:delete()),
   ?PRINT_CODE(""),

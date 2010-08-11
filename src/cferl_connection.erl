@@ -18,7 +18,7 @@
 -export([get_account_info/0,
          get_containers_names/0, get_containers_names/1,
          get_containers_info/0, get_containers_info/1,
-         create_container/1]).
+         container_exists/1, create_container/1]).
 
 %% Exposed for internal usage
 -export([send_storage_request/3]).
@@ -41,8 +41,6 @@ get_account_info_result({ok, "204", ResponseHeaders, _}) ->
   }};
 get_account_info_result(Other) ->
   cferl_lib:error_result(Other).
-
-%% FIXME add: container_exists
 
 %% @doc Retrieve all the containers names (within the limits imposed by Cloud Files server).
 %% @spec get_containers_names() -> {ok, Names::[binary()]} | Error
@@ -99,9 +97,20 @@ get_containers_info_result({ok, "200", _, ResponseBody}) ->
 get_containers_info_result(Other) ->
   cferl_lib:error_result(Other).
 
-%% FIXME add: get_container
+%% @doc Test the existence of a container.
+%% @spec container_exists(Name::binary()) -> true | false
+container_exists(Name) when is_binary(Name) ->
+  Result = send_storage_request(head, <<"/", Name/binary>>, raw),
+  container_exists_result(Result).
 
-%% FIXME comment! -> {ok, Container::term()} | {error, already_existing} | {error, {unexpected_response, Cause::term()}}
+container_exists_result({ok, "204", _, _}) ->
+  true;
+container_exists_result(_) ->
+  false.
+
+%% TODO add: get_container
+
+%% TODO comment! -> {ok, Container::term()} | {error, already_existing} | {error, {unexpected_response, Cause::term()}}
 create_container(Name) when is_binary(Name) ->
   Result = send_storage_request(put, <<"/", Name/binary>>, raw),
   create_container_result(Name, Result).
@@ -113,9 +122,9 @@ create_container_result(_, {ok, "202", _, _}) ->
 create_container_result(_, Other) ->
   cferl_lib:error_result(Other).
   
-%% FIXME add: get_public_containers ?names ?info  
+%% TODO add: get_public_containers_names
 
-%% FIXME comment!
+%% Friend functions
 %% @hidden
 send_storage_request(Method, PathAndQuery, Accept)
   when is_atom(Method), is_binary(PathAndQuery), is_atom(Accept) ->
