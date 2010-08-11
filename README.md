@@ -3,11 +3,15 @@ Rackspace Cloud Files Erlang Client
 
 > Version 0.1 - Currently under initial development
 
+Description
+-----------
+
+This is an Erlang interface into the Rackspace Cloud Files service. It has been largely inspired by the existing [Ruby](http://github.com/rackspace/ruby-cloudfiles) API.
 
 Building
 --------
 
-cferl relies on [rebar](http://bitbucket.org/basho/rebar/wiki/Home) for its build and dependency management.
+cferl relies on [rebar](http://bitbucket.org/basho/rebar/wiki/Home) for its build and dependency management and targets Erlang/OTP R13B04 or above.
 
 Simply run:
 

@@ -10,18 +10,13 @@
 -author('David Dossot <david@dossot.net>').
 
 %% Public API
--export([name/0, files/0, delete/0, new_file/1]).
+-export([name/0, delete/0]).
 
 %% TODO comment!
 name() ->
   Name.
   
-%% TODO add bytes() count() refresh()
-
-%% TODO comment!
-files() ->
-  %% FIXME implement!
-  [].
+%% TODO add: bytes() count() refresh() is_public() is_empty() log_retention()
 
 %% TODO comment!
 delete() ->
@@ -29,7 +24,6 @@ delete() ->
   %% FIXME handle 204, 404, 409 and other
   ok.
 
-%% TODO comment!
-new_file(Name) when is_binary(Name) ->
-  %% FIXME implement!
-  ok.
+%% TODO add: set_log_retention() make_public() make_private()
+
+%% TODO add: object_exists, objects_details, objects_names, new_object

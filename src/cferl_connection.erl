@@ -48,7 +48,7 @@ get_account_info_result(Other) ->
 get_containers_names() ->
   Result = send_storage_request(get, "", raw),
   get_containers_names_result(Result).
-  
+
 %% @doc Retrieve the containers names filtered by the provided query arguments.
 %% @spec get_containers_names(QueryArgs) -> {ok, Names::[binary()]} | Error
 %%   QueryArgs = cf_query_args()
@@ -63,6 +63,7 @@ get_containers_names_result({ok, "200", _, ResponseBody}) ->
 get_containers_names_result(Other) ->
   cferl_lib:error_result(Other).
 
+%% FIXME rename into get_containers_details
 %% @doc Retrieve all the containers information (within the limits imposed by Cloud Files server).
 %% @spec get_containers_info() -> {ok, [cf_container_info()]} | Error
 %%   Error = cferl_error()
