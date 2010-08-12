@@ -62,12 +62,12 @@ container_tests(CloudFiles) ->
   
   ?PRINT_CODE("# Retrieve information for all existing containers (within the server limits)"),
   ?PRINT_CALL({ok, ContainersInfo} = CloudFiles:get_containers_details()),
-  ?PRINT_CODE("# ContainersInfo is a list of #cf_container_info records"),
+  ?PRINT_CODE("# ContainersInfo is a list of #cf_container_details records"),
   ?PRINT_CALL([Info|_]=ContainersInfo),
-  ?PRTFM_CODE("Info = #cf_container_info{name=~p, bytes=~B, count=~B}",
-              [Info#cf_container_info.name,
-               Info#cf_container_info.bytes,
-               Info#cf_container_info.count]),
+  ?PRTFM_CODE("Info = #cf_container_details{name=~p, bytes=~B, count=~B}",
+              [Info#cf_container_details.name,
+               Info#cf_container_details.bytes,
+               Info#cf_container_details.count]),
   ?PRINT_CODE(""),
   
   ?PRINT_CODE("# Retrieve information for a maximum of 5 containers whose names start at cf"),

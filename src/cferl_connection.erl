@@ -8,7 +8,7 @@
 %%% @type cferl_error() = {error, not_found} | {error, unauthorized} | {error, {unexpected_response, Other}}.
 %%% @type cf_account_info() = record(). Record of type cf_account_info.
 %%% @type cf_query_args() = record(). Record of type cf_query_args.
-%%% @type cf_container_info() = record(). Record of type cf_container_info.
+%%% @type cf_container_details() = record(). Record of type cf_container_details.
 
 -module(cferl_connection, [AuthToken, StorageUrl, CdnManagementUrl]).
 -author('David Dossot <david@dossot.net>').
@@ -64,14 +64,14 @@ get_containers_names_result(Other) ->
   cferl_lib:error_result(Other).
 
 %% @doc Retrieve all the containers information (within the limits imposed by Cloud Files server).
-%% @spec get_containers_details() -> {ok, [cf_container_info()]} | Error
+%% @spec get_containers_details() -> {ok, [cf_container_details()]} | Error
 %%   Error = cferl_error()
 get_containers_details() ->
   Result = send_storage_request(get, "", json),
   get_containers_details_result(Result).
 
 %% @doc Retrieve the containers information filtered by the provided query arguments.
-%% @spec get_containers_details(QueryArgs) -> {ok, [cf_container_info()]} | Error
+%% @spec get_containers_details(QueryArgs) -> {ok, [cf_container_details()]} | Error
 %%   QueryArgs = cf_query_args()
 %%   Error = cferl_error()
 get_containers_details(QueryArgs) when is_record(QueryArgs, cf_query_args) ->
@@ -84,7 +84,7 @@ get_containers_details_result({ok, "204", _, _}) ->
 get_containers_details_result({ok, "200", _, ResponseBody}) ->
   AtomizeKeysFun =
     fun({struct, Proplist}) ->
-      #cf_container_info{
+      #cf_container_details{
         name = proplists:get_value(<<"name">>, Proplist),
         bytes = proplists:get_value(<<"bytes">>, Proplist),
         count = proplists:get_value(<<"count">>, Proplist)

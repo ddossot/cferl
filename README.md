@@ -45,9 +45,9 @@ The following, which is the output when running the integration tests, demonstra
 
     # Retrieve information for all existing containers (within the server limits)
     {ok,ContainersInfo}=CloudFiles:get_containers_details().
-    # ContainersInfo is a list of #cf_container_info records
+    # ContainersInfo is a list of #cf_container_details records
     [Info|_]=ContainersInfo.
-    Info = #cf_container_info{name=<<"cferl-test">>, bytes=360, count=1}
+    Info = #cf_container_details{name=<<"cferl-test">>, bytes=360, count=1}
     
     # Retrieve information for a maximum of 5 containers whose names start at cf
     {ok,CfContainersInfo}=CloudFiles:get_containers_details(#cf_query_args{marker=<<"cf">>,limit=5}).
