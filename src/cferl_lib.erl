@@ -35,9 +35,9 @@ caseless_get_proplist_value(Key, Proplist) when is_list(Key), is_list(Proplist) 
   proplists:get_value(string:to_lower(Key),
                       to_lower_case_keys(Proplist)).
 
-%% @doc Turn a cf_query_args record into a ULR encoded query string.
+%% @doc Turn a cf_container_query_args record into a ULR encoded query string.
 %% @spec query_args_to_string(QueryArgs::record()) -> string()
-query_args_to_string(#cf_query_args{marker=Marker, limit=Limit}) ->
+query_args_to_string(#cf_container_query_args{marker=Marker, limit=Limit}) ->
   QueryElements =
     [
       case Marker of
@@ -71,9 +71,9 @@ caseless_get_proplist_value_test() ->
   ?assert(2 == caseless_get_proplist_value("bbb", [{"AaA", 1}, {"bBb", 2}])).
 
 query_args_to_string_test() ->
-  ?assert("" == query_args_to_string(#cf_query_args{})),
-  ?assert("?limit=12" == query_args_to_string(#cf_query_args{limit=12})),
-  ?assert("?marker=abc" == query_args_to_string(#cf_query_args{marker= <<"abc">>})),
-  ?assert("?marker=def&limit=25" == query_args_to_string(#cf_query_args{limit=25,marker= <<"def">>})).
+  ?assert("" == query_args_to_string(#cf_container_query_args{})),
+  ?assert("?limit=12" == query_args_to_string(#cf_container_query_args{limit=12})),
+  ?assert("?marker=abc" == query_args_to_string(#cf_container_query_args{marker= <<"abc">>})),
+  ?assert("?marker=def&limit=25" == query_args_to_string(#cf_container_query_args{limit=25,marker= <<"def">>})).
 
 -endif.

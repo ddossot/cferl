@@ -7,7 +7,7 @@
 %%%
 %%% @type cferl_error() = {error, not_found} | {error, unauthorized} | {error, {unexpected_response, Other}}.
 %%% @type cf_account_info() = record(). Record of type cf_account_info.
-%%% @type cf_query_args() = record(). Record of type cf_query_args.
+%%% @type cf_container_query_args() = record(). Record of type cf_container_query_args.
 %%% @type cf_container_details() = record(). Record of type cf_container_details.
 
 -module(cferl_connection, [AuthToken, StorageUrl, CdnManagementUrl]).
@@ -51,9 +51,9 @@ get_containers_names() ->
 
 %% @doc Retrieve the containers names filtered by the provided query arguments.
 %% @spec get_containers_names(QueryArgs) -> {ok, Names::[binary()]} | Error
-%%   QueryArgs = cf_query_args()
+%%   QueryArgs = cf_container_query_args()
 %%   Error = cferl_error()
-get_containers_names(QueryArgs) when is_record(QueryArgs, cf_query_args) ->
+get_containers_names(QueryArgs) when is_record(QueryArgs, cf_container_query_args) ->
   QueryString = cferl_lib:query_args_to_string(QueryArgs),
   Result = send_storage_request(get, QueryString, raw),
   get_containers_names_result(Result).
@@ -72,9 +72,9 @@ get_containers_details() ->
 
 %% @doc Retrieve the containers information filtered by the provided query arguments.
 %% @spec get_containers_details(QueryArgs) -> {ok, [cf_container_details()]} | Error
-%%   QueryArgs = cf_query_args()
+%%   QueryArgs = cf_container_query_args()
 %%   Error = cferl_error()
-get_containers_details(QueryArgs) when is_record(QueryArgs, cf_query_args) ->
+get_containers_details(QueryArgs) when is_record(QueryArgs, cf_container_query_args) ->
   QueryString = cferl_lib:query_args_to_string(QueryArgs),
   Result = send_storage_request(get, QueryString, json),
   get_containers_details_result(Result).

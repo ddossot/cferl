@@ -11,5 +11,4 @@
 -record(cf_account_info, {bytes_used, container_count}).
 -record(cf_container_details, {name, bytes, count}).
 
-%% FIXME rename into cf_container_query_args
--record(cf_query_args, {marker, limit}).
+-record(cf_container_query_args, {marker, limit}).
