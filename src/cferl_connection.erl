@@ -122,7 +122,7 @@ create_container_result(_, {ok, "202", _, _}) ->
 create_container_result(_, Other) ->
   cferl_lib:error_result(Other).
   
-%% TODO add: get_public_containers_names
+%% TODO add: get_public_containers_names(now | all_time)
 
 %% Friend functions
 %% @hidden

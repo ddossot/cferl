@@ -60,18 +60,18 @@ container_tests(CloudFiles) ->
   % retrieve 0 container
   {ok, []} = CloudFiles:get_containers_details(#cf_container_query_args{limit=0}),
   
-  ?PRINT_CODE("# Retrieve information for all existing containers (within the server limits)"),
-  ?PRINT_CALL({ok, ContainersInfo} = CloudFiles:get_containers_details()),
-  ?PRINT_CODE("# ContainersInfo is a list of #cf_container_details records"),
-  ?PRINT_CALL([Info|_]=ContainersInfo),
-  ?PRTFM_CODE("Info = #cf_container_details{name=~p, bytes=~B, count=~B}",
-              [Info#cf_container_details.name,
-               Info#cf_container_details.bytes,
-               Info#cf_container_details.count]),
+  ?PRINT_CODE("# Retrieve details for all existing containers (within the server limits)"),
+  ?PRINT_CALL({ok, ContainersDetails} = CloudFiles:get_containers_details()),
+  ?PRINT_CODE("# ContainersDetails is a list of #cf_container_details records"),
+  ?PRINT_CALL([Detail|_]=ContainersDetails),
+  ?PRTFM_CODE("Detail = #cf_container_details{name=~p, bytes=~B, count=~B}",
+              [Detail#cf_container_details.name,
+               Detail#cf_container_details.bytes,
+               Detail#cf_container_details.count]),
   ?PRINT_CODE(""),
   
-  ?PRINT_CODE("# Retrieve information for a maximum of 5 containers whose names start at cf"),
-  ?PRINT_CALL({ok, CfContainersInfo} = CloudFiles:get_containers_details(#cf_container_query_args{marker= <<"cf">>, limit=5})),
+  ?PRINT_CODE("# Retrieve details for a maximum of 5 containers whose names start at cf"),
+  ?PRINT_CALL({ok, CfContainersDetails} = CloudFiles:get_containers_details(#cf_container_query_args{marker= <<"cf">>, limit=5})),
   ?PRINT_CODE(""),
 
   ?PRINT_CODE("# Check a container's existence"),
@@ -89,5 +89,9 @@ container_tests(CloudFiles) ->
   ?PRINT_CODE("# Delete an existing container"),
   ?PRINT_CALL(ok = Container:delete()),
   ?PRINT_CODE(""),
+  
+  % ensure deleting missing container is properly handled
+  {error, not_found} = Container:delete(),
+  
   ok.
 

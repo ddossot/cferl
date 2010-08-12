@@ -8,6 +8,7 @@ Description
 
 This is an Erlang interface into the Rackspace Cloud Files service. It has been largely inspired by the existing [Ruby](http://github.com/rackspace/ruby-cloudfiles) API.
 
+
 Building
 --------
 
@@ -20,6 +21,7 @@ Simply run:
 To generate the cferl documentation, run:
 
     ./rebar delete-deps doc
+
 
 Using
 -----
@@ -43,24 +45,26 @@ The following, which is the output when running the integration tests, demonstra
     {ok,ThreeNames}=CloudFiles:get_containers_names(#cf_container_query_args{limit=3}).
     ThreeNames=[<<"cferl-test">>]
 
-    # Retrieve information for all existing containers (within the server limits)
-    {ok,ContainersInfo}=CloudFiles:get_containers_details().
-    # ContainersInfo is a list of #cf_container_details records
-    [Info|_]=ContainersInfo.
-    Info = #cf_container_details{name=<<"cferl-test">>, bytes=360, count=1}
+    # Retrieve details for all existing containers (within the server limits)
+    {ok,ContainersDetails}=CloudFiles:get_containers_details().
+    # ContainersDetails is a list of #cf_container_details records
+    [Detail|_]=ContainersDetails.
+    Detail = #cf_container_details{name=<<"cferl-test">>, bytes=360, count=1}
     
-    # Retrieve information for a maximum of 5 containers whose names start at cf
-    {ok,CfContainersInfo}=CloudFiles:get_containers_details(#cf_container_query_args{marker=<<"cf">>,limit=5}).
+    # Retrieve details for a maximum of 5 containers whose names start at cf
+    {ok,CfContainersDetails}=CloudFiles:get_containers_details(#cf_container_query_args{marker=<<"cf">>,limit=5}).
     
     # Check a container's existence
     false=CloudFiles:container_exists(<<"new_container">>).
     
     # Create a new container
     {ok,Container}=CloudFiles:create_container(<<"new_container">>).
+    
     true=CloudFiles:container_exists(<<"new_container">>).
     
     # Delete an existing container
     ok=Container:delete().
+
 
 More information
 ----------------
