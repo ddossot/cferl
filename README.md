@@ -42,8 +42,8 @@ The following, which is the output when running the integration tests, demonstra
     Names=[<<"cferl-test">>]
 
     # Retrieve names of a maximum of 3 existing containers
-    {ok,ThreeNames}=CloudFiles:get_containers_names(#cf_container_query_args{limit=3}).
-    ThreeNames=[<<"cferl-test">>]
+    {ok,ThreeNamesMax}=CloudFiles:get_containers_names(#cf_container_query_args{limit=3}).
+    ThreeNamesMax=[<<"cferl-test">>]
 
     # Retrieve details for all existing containers (within the server limits)
     {ok,ContainersDetails}=CloudFiles:get_containers_details().
@@ -54,16 +54,31 @@ The following, which is the output when running the integration tests, demonstra
     # Retrieve details for a maximum of 5 containers whose names start at cf
     {ok,CfContainersDetails}=CloudFiles:get_containers_details(#cf_container_query_args{marker=<<"cf">>,limit=5}).
     
+    # Get a container reference by name
+    {ok,Container}=CloudFiles:get_container(<<"cferl-test">>).
+    
+    # Get container details from its reference
+    ContainerName=Container:name().
+    ContainerBytes=Container:bytes().
+    ContainerSize=Container:count().
+    ContainerIsEmpty=Container:is_empty().
+    # > Name: <<"cferl-test">> - Bytes: 360 - Size: 1 - IsEmpty: false
+    
     # Check a container's existence
     false=CloudFiles:container_exists(<<"new_container">>).
     
     # Create a new container
-    {ok,Container}=CloudFiles:create_container(<<"new_container">>).
+    {ok,NewContainer}=CloudFiles:create_container(<<"new_container">>).
     
     true=CloudFiles:container_exists(<<"new_container">>).
     
+    <<"new_container">>=NewContainer:name().
+    0=NewContainer:bytes().
+    0=NewContainer:count().
+    true=NewContainer:is_empty().
+    
     # Delete an existing container
-    ok=Container:delete().
+    ok=NewContainer:delete().
 
 
 More information

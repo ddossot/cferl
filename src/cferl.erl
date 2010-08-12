@@ -5,7 +5,7 @@
 %%% See LICENSE for license information.
 %%% Copyright (c) 2010 David Dossot
 %%%
-%%% @type cferl_connection(). Reference to the cferl_connection parameterized module.
+%%% @type cferl_connection() = term(). Reference to the cferl_connection parameterized module.
 %%% @type cferl_error() = {error, not_found} | {error, unauthorized} | {error, {unexpected_response, Other}}.
 
 -module(cferl).

@@ -54,8 +54,8 @@ container_tests(CloudFiles) ->
   ?PRTFM_CODE("Names=~p~n", [Names]),
   
   ?PRINT_CODE("# Retrieve names of a maximum of 3 existing containers"),
-  ?PRINT_CALL({ok, ThreeNames} = CloudFiles:get_containers_names(#cf_container_query_args{limit=3})),
-  ?PRTFM_CODE("ThreeNames=~p~n", [ThreeNames]),
+  ?PRINT_CALL({ok, ThreeNamesMax} = CloudFiles:get_containers_names(#cf_container_query_args{limit=3})),
+  ?PRTFM_CODE("ThreeNamesMax=~p~n", [ThreeNamesMax]),
   
   % retrieve 0 container
   {ok, []} = CloudFiles:get_containers_details(#cf_container_query_args{limit=0}),
@@ -73,25 +73,41 @@ container_tests(CloudFiles) ->
   ?PRINT_CODE("# Retrieve details for a maximum of 5 containers whose names start at cf"),
   ?PRINT_CALL({ok, CfContainersDetails} = CloudFiles:get_containers_details(#cf_container_query_args{marker= <<"cf">>, limit=5})),
   ?PRINT_CODE(""),
+  
+  ?PRINT_CODE("# Get a container reference by name"),
+  ?PRINT_CALL({ok, Container} =  CloudFiles:get_container(<<"cferl-test">>)),
+  ?PRINT_CODE(""),
+
+  ?PRINT_CODE("# Get container details from its reference"),
+  ?PRINT_CALL(ContainerName = Container:name()),
+  ?PRINT_CALL(ContainerBytes = Container:bytes()),
+  ?PRINT_CALL(ContainerSize = Container:count()),
+  ?PRINT_CALL(ContainerIsEmpty = Container:is_empty()),
+  ?PRTFM_CODE("# > Name: ~p - Bytes: ~p - Size: ~p - IsEmpty: ~p",
+              [ContainerName, ContainerBytes, ContainerSize, ContainerIsEmpty]),
+  ?PRINT_CODE(""),
 
   ?PRINT_CODE("# Check a container's existence"),
   ?PRINT_CALL(false = CloudFiles:container_exists(<<"new_container">>)),
   ?PRINT_CODE(""),
 
   ?PRINT_CODE("# Create a new container"),
-  ?PRINT_CALL({ok, Container} = CloudFiles:create_container(<<"new_container">>)),
+  ?PRINT_CALL({ok, NewContainer} = CloudFiles:create_container(<<"new_container">>)),
   ?PRINT_CODE(""),
   ?PRINT_CALL(true = CloudFiles:container_exists(<<"new_container">>)),
   ?PRINT_CODE(""),
-  
-  % TODO show Container:name() count() bytes()
+  ?PRINT_CALL(<<"new_container">> = NewContainer:name()),
+  ?PRINT_CALL(0 = NewContainer:bytes()),
+  ?PRINT_CALL(0 = NewContainer:count()),
+  ?PRINT_CALL(true = NewContainer:is_empty()),
+  ?PRINT_CODE(""),
   
   ?PRINT_CODE("# Delete an existing container"),
-  ?PRINT_CALL(ok = Container:delete()),
+  ?PRINT_CALL(ok = NewContainer:delete()),
   ?PRINT_CODE(""),
   
   % ensure deleting missing container is properly handled
-  {error, not_found} = Container:delete(),
+  {error, not_found} = NewContainer:delete(),
   
   ok.
 

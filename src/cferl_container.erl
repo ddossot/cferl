@@ -7,24 +7,40 @@
 %%%
 %%% @type cferl_error() = {error, not_found} | {error, unauthorized} | {error, {unexpected_response, Other}}.
 
--module(cferl_container, [Connection, Name]).
+-module(cferl_container, [Connection, Name, Bytes, Count]).
 -author('David Dossot <david@dossot.net>').
 
 %% Public API
--export([name/0, delete/0]).
+-export([name/0, bytes/0, count/0, is_empty/0,
+         delete/0]).
 
-%% TODO comment!
+%% @doc Name of the current container.
+%% @spec name() -> binary()
 name() ->
   Name.
-  
-%% TODO add: bytes() count() refresh() is_public() is_empty() log_retention()
+
+%% @doc Size in bytes of the current container.
+%% @spec bytes() -> integer()
+bytes() ->
+  Bytes.
+
+%% @doc Number of objects in the current container.
+%% @spec count() -> integer()
+count() ->
+  Count.
+
+%% @doc Determine if the current container is empty.
+%% @spec is_empty() -> true | false
+is_empty() ->
+  count() == 0.
+
+%% TODO add: is_public() log_retention()
 
 %% @doc Delete the current container (which must be empty).
 %% @spec delete() -> ok | Error
 %%   Error = {error, not_empty} | cferl_error()
 delete() ->
   Result = Connection:send_storage_request(delete, <<"/", Name/binary>>, raw),
-  %% FIXME handle 204, 404, 409 and other
   delete_result(Result).
 
 delete_result({ok, "204", _, _}) ->
@@ -34,7 +50,6 @@ delete_result({ok, "409", _, _}) ->
 delete_result(Other) ->
   cferl_lib:error_result(Other).
 
+%% TODO add: make_public() make_private() refresh() set_log_retention()
 
-%% TODO add: set_log_retention() make_public() make_private()
-
-%% TODO add: object_exists, objects_details, objects_names, new_object
+%% TODO add: object_exists() objects_details() objects_names() new_object()

@@ -9,6 +9,7 @@
 %%% @type cf_account_info() = record(). Record of type cf_account_info.
 %%% @type cf_container_query_args() = record(). Record of type cf_container_query_args.
 %%% @type cf_container_details() = record(). Record of type cf_container_details.
+%%% @type cferl_container() = term(). Reference to the cferl_container parameterized module.
 
 -module(cferl_connection, [AuthToken, StorageUrl, CdnManagementUrl]).
 -author('David Dossot <david@dossot.net>').
@@ -18,7 +19,7 @@
 -export([get_account_info/0,
          get_containers_names/0, get_containers_names/1,
          get_containers_details/0, get_containers_details/1,
-         container_exists/1, create_container/1]).
+         container_exists/1, get_container/1, create_container/1]).
 
 %% Exposed for internal usage
 -export([send_storage_request/3]).
@@ -108,15 +109,31 @@ container_exists_result({ok, "204", _, _}) ->
 container_exists_result(_) ->
   false.
 
-%% TODO add: get_container
+%% @doc Get a reference to an existing container.
+%% @spec get_container(Name::binary) -> {ok, Container} | Error
+%%   Container = cferl_container()
+%%   Error = cferl_error()
+get_container(Name) when is_binary(Name) ->
+  Result = send_storage_request(head, <<"/", Name/binary>>, raw),
+  get_container_result(Name, Result).
 
-%% TODO comment! -> {ok, Container::term()} | {error, already_existing} | {error, {unexpected_response, Cause::term()}}
+get_container_result(Name, {ok, "204", ResponseHeaders, _}) ->
+  Bytes = get_int_header("x-container-bytes-used", ResponseHeaders),
+  Count = get_int_header("x-container-object-count", ResponseHeaders),
+  {ok, cferl_container:new(THIS, Name, Bytes, Count)};
+get_container_result(_, Other) ->
+  cferl_lib:error_result(Other).
+
+%% @doc Create a new container (name must not be already used).
+%% @spec create_container(Name::binary) -> {ok, Container} | Error
+%%   Container = cferl_container()
+%%   Error = {error, already_existing} | cferl_error()
 create_container(Name) when is_binary(Name) ->
   Result = send_storage_request(put, <<"/", Name/binary>>, raw),
   create_container_result(Name, Result).
 
 create_container_result(Name, {ok, "201", _, _}) ->
-  {ok, cferl_container:new(THIS, Name)};
+  get_container(Name);
 create_container_result(_, {ok, "202", _, _}) ->  
   {error, already_existing};
 create_container_result(_, Other) ->
