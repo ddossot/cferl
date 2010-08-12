@@ -17,12 +17,6 @@ Simply run:
 
     ./rebar get-deps compile eunit
 
-Alternatively, you can run the integration tests which also builds everything:
-
-    ./int_tests
-
-Be sure to have your API key ready before doing so, as they will be needed.
-
 To generate the cferl documentation, run:
 
     ./rebar delete-deps doc
