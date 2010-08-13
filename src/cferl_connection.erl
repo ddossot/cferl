@@ -19,10 +19,11 @@
 -export([get_account_info/0,
          get_containers_names/0, get_containers_names/1,
          get_containers_details/0, get_containers_details/1,
-         container_exists/1, get_container/1, create_container/1]).
+         container_exists/1, get_container/1, create_container/1,
+         get_public_containers_names/1]).
 
 %% Exposed for internal usage
--export([send_storage_request/3]).
+-export([send_storage_request/3, send_cdn_management_request/3]).
 
 %% @doc Retrieve the account information.
 %% @spec get_account_info() -> {ok, AccountInfo} | Error
@@ -44,14 +45,14 @@ get_account_info_result(Other) ->
   cferl_lib:error_result(Other).
 
 %% @doc Retrieve all the containers names (within the limits imposed by Cloud Files server).
-%% @spec get_containers_names() -> {ok, Names::[binary()]} | Error
+%% @spec get_containers_names() -> {ok, [binary()]} | Error
 %%   Error = cferl_error()
 get_containers_names() ->
   Result = send_storage_request(get, "", raw),
   get_containers_names_result(Result).
 
 %% @doc Retrieve the containers names filtered by the provided query arguments.
-%% @spec get_containers_names(QueryArgs) -> {ok, Names::[binary()]} | Error
+%% @spec get_containers_names(QueryArgs) -> {ok, [binary()]} | Error
 %%   QueryArgs = cf_container_query_args()
 %%   Error = cferl_error()
 get_containers_names(QueryArgs) when is_record(QueryArgs, cf_container_query_args) ->
@@ -59,6 +60,8 @@ get_containers_names(QueryArgs) when is_record(QueryArgs, cf_container_query_arg
   Result = send_storage_request(get, QueryString, raw),
   get_containers_names_result(Result).
 
+get_containers_names_result({ok, "204", _, _}) ->
+  {ok, []};
 get_containers_names_result({ok, "200", _, ResponseBody}) ->
   {ok, [list_to_binary(Name) || Name <- string:tokens(ResponseBody, "\n")]};
 get_containers_names_result(Other) ->
@@ -139,13 +142,33 @@ create_container_result(_, {ok, "202", _, _}) ->
 create_container_result(_, Other) ->
   cferl_lib:error_result(Other).
   
-%% TODO add: get_public_containers_names(now | all_time)
+%% @doc Retrieve the names of public (CDN-enabled) containers, whether they are still public (active) or happen to have been exposed in the past(all_time).
+%% @spec get_public_containers_names(TimeFilter::active | all_time) -> {ok, [binary()]} | Error
+%%   Error = cferl_error()
+get_public_containers_names(active) ->
+  Result = send_cdn_management_request(get, "?enabled_only=true", raw),
+  get_public_containers_names_result(Result);
+get_public_containers_names(all_time) ->
+  Result = send_cdn_management_request(get, "", raw),
+  get_public_containers_names_result(Result).
+
+get_public_containers_names_result({ok, "204", _, _}) ->
+  {ok, []};
+get_public_containers_names_result({ok, "200", _, ResponseBody}) ->
+  {ok, [list_to_binary(Name) || Name <- string:tokens(ResponseBody, "\n")]};
+get_public_containers_names_result(Other) ->
+  cferl_lib:error_result(Other).
 
 %% Friend functions
 %% @hidden
 send_storage_request(Method, PathAndQuery, Accept)
   when is_atom(Method), is_atom(Accept) ->
     send_request(StorageUrl, Method, PathAndQuery, Accept).
+
+%% @hidden
+send_cdn_management_request(Method, PathAndQuery, Accept)
+  when is_atom(Method), is_atom(Accept) ->
+    send_request(CdnManagementUrl, Method, PathAndQuery, Accept).
   
 %% Private functions
 send_request(BaseUrl, Method, PathAndQuery, Accept)

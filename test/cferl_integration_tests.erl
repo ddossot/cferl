@@ -60,6 +60,9 @@ container_tests(CloudFiles) ->
   % retrieve 0 container
   {ok, []} = CloudFiles:get_containers_details(#cf_container_query_args{limit=0}),
   
+  % retrieve 0 public container name
+  {ok, []} = CloudFiles:get_public_containers_names(active),
+  
   ?PRINT_CODE("# Retrieve details for all existing containers (within the server limits)"),
   ?PRINT_CALL({ok, ContainersDetails} = CloudFiles:get_containers_details()),
   ?PRINT_CODE("# ContainersDetails is a list of #cf_container_details records"),
@@ -101,6 +104,9 @@ container_tests(CloudFiles) ->
   ?PRINT_CALL(0 = NewContainer:count()),
   ?PRINT_CALL(true = NewContainer:is_empty()),
   ?PRINT_CODE(""),
+  
+  % TODO make public, call get_public_containers_names(active)
+  % TODO make private, call get_public_containers_names(active & all_time)
   
   ?PRINT_CODE("# Delete an existing container"),
   ?PRINT_CALL(ok = NewContainer:delete()),
