@@ -7,11 +7,11 @@
 %%%
 %%% @type cferl_error() = {error, not_found} | {error, unauthorized} | {error, {unexpected_response, Other}}.
 
--module(cferl_container, [Connection, Name, Bytes, Count]).
+-module(cferl_container, [Connection, Name, Bytes, Count, CdnDetails]).
 -author('David Dossot <david@dossot.net>').
 
 %% Public API
--export([name/0, bytes/0, count/0, is_empty/0,
+-export([name/0, bytes/0, count/0, is_empty/0, is_public/0,
          delete/0]).
 
 %% @doc Name of the current container.
@@ -34,7 +34,12 @@ count() ->
 is_empty() ->
   count() == 0.
 
-%% TODO add: is_public() log_retention()
+%% @doc Determine if the current container is public (CDN-enabled).
+%% @spec is_public() -> true | false
+is_public() ->
+  proplists:get_value(cdn_enabled, CdnDetails).
+
+%% TODO add: log_retention() cdn_url() cdn_ttl()
 
 %% @doc Delete the current container (which must be empty).
 %% @spec delete() -> ok | Error

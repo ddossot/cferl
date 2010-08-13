@@ -1,7 +1,7 @@
 Rackspace Cloud Files Erlang Client
 ===================================
 
-> Version 0.1 - Currently under initial development
+> Version 0.1 - Currently under initial development!
 
 Description
 -----------
@@ -76,6 +76,7 @@ The following, which is the output when running the integration tests, demonstra
     0=NewContainer:bytes().
     0=NewContainer:count().
     true=NewContainer:is_empty().
+    false=NewContainer:is_public().
     
     # Delete an existing container
     ok=NewContainer:delete().

@@ -103,6 +103,7 @@ container_tests(CloudFiles) ->
   ?PRINT_CALL(0 = NewContainer:bytes()),
   ?PRINT_CALL(0 = NewContainer:count()),
   ?PRINT_CALL(true = NewContainer:is_empty()),
+  ?PRINT_CALL(false = NewContainer:is_public()),
   ?PRINT_CODE(""),
   
   % TODO make public, call get_public_containers_names(active)

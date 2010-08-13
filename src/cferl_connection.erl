@@ -123,10 +123,30 @@ get_container(Name) when is_binary(Name) ->
 get_container_result(Name, {ok, "204", ResponseHeaders, _}) ->
   Bytes = get_int_header("x-container-bytes-used", ResponseHeaders),
   Count = get_int_header("x-container-object-count", ResponseHeaders),
-  {ok, cferl_container:new(THIS, Name, Bytes, Count)};
+  {ok, CdnDetails} = get_container_cdn_details(Name),
+  {ok, cferl_container:new(THIS, Name, Bytes, Count, CdnDetails)};
 get_container_result(_, Other) ->
   cferl_lib:error_result(Other).
 
+get_container_cdn_details(Name) ->
+  Result = send_cdn_management_request(head, <<"/", Name/binary>>, raw),
+  get_container_cdn_details_result(Result).
+
+get_container_cdn_details_result({ok, "204", ResponseHeaders, _}) ->
+  {ok, build_cdn_details_proplist(ResponseHeaders)};
+get_container_cdn_details_result(Other) ->
+  {ok, build_cdn_details_proplist([])}.
+
+build_cdn_details_proplist(Headers) ->
+  [
+    {cdn_enabled, get_boolean_header("x-cdn-enabled", Headers)},
+    {ttl, get_int_header("x-ttl", Headers)},
+    {cdn_uri, get_binary_header("x-cdn-uri", Headers)},
+    {user_agent_acl, get_binary_header("x-user-agent-acl", Headers)},
+    {referrer_acl, get_binary_header("x-referrer-acl", Headers)},
+    {log_retention, get_boolean_header("x-log-retention", Headers)}
+  ].
+  
 %% @doc Create a new container (name must not be already used).
 %% @spec create_container(Name::binary) -> {ok, Container} | Error
 %%   Container = cferl_container()
@@ -201,5 +221,25 @@ build_json_query_string(PathAndQuery) when is_list(PathAndQuery) ->
   "format=json".
 
 get_int_header(Name, Headers) when is_list(Headers) ->
-  list_to_integer(cferl_lib:caseless_get_proplist_value(Name, Headers)).
+  list_to_int(cferl_lib:caseless_get_proplist_value(Name, Headers)).
 
+list_to_int(List) when is_list(List) ->
+  list_to_integer(List);
+list_to_int(_) ->
+  0.
+
+get_boolean_header(Name, Headers) when is_list(Headers) ->
+  list_to_boolean(cferl_lib:caseless_get_proplist_value(Name, Headers)).
+
+list_to_boolean(List) when is_list(List) ->
+  string:to_lower(List) == "true";
+list_to_boolean(_) ->
+  false.
+
+get_binary_header(Name, Headers) when is_list(Headers) ->
+  list_to_bin(cferl_lib:caseless_get_proplist_value(Name, Headers)).
+  
+list_to_bin(List) when is_list(List) ->
+  list_to_binary(List);
+list_to_bin(_) ->
+  <<>>.
