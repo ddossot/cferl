@@ -144,26 +144,31 @@ create_container_result(_, Other) ->
 %% Friend functions
 %% @hidden
 send_storage_request(Method, PathAndQuery, Accept)
-  when is_atom(Method), is_binary(PathAndQuery), is_atom(Accept) ->
-    send_storage_request(Method, binary_to_list(PathAndQuery), Accept);
-    
-send_storage_request(Method, PathAndQuery, raw)
-  when is_atom(Method), is_list(PathAndQuery) ->
-    do_send_storage_request(PathAndQuery, Method);
-    
-send_storage_request(Method, PathAndQuery, json)
-  when is_atom(Method), is_list(PathAndQuery) ->
-    do_send_storage_request(build_json_query_string(PathAndQuery),
-                            Method).
+  when is_atom(Method), is_atom(Accept) ->
+    send_request(StorageUrl, Method, PathAndQuery, Accept).
   
-do_send_storage_request(PathAndQuery, Method)
-  when is_list(PathAndQuery), is_atom(Method) ->
-    ibrowse:send_req(StorageUrl ++ PathAndQuery,
+%% Private functions
+send_request(BaseUrl, Method, PathAndQuery, Accept)
+  when is_atom(Method), is_binary(PathAndQuery), is_atom(Accept) ->
+    send_request(BaseUrl, Method, binary_to_list(PathAndQuery), Accept);
+    
+send_request(BaseUrl, Method, PathAndQuery, raw)
+  when is_atom(Method), is_list(PathAndQuery) ->
+    send_request(BaseUrl, PathAndQuery, Method);
+    
+send_request(BaseUrl, Method, PathAndQuery, json)
+  when is_atom(Method), is_list(PathAndQuery) ->
+    send_request(BaseUrl,
+                 build_json_query_string(PathAndQuery),
+                 Method).
+  
+send_request(BaseUrl, PathAndQuery, Method)
+  when is_list(BaseUrl), is_list(PathAndQuery), is_atom(Method) ->
+    ibrowse:send_req(BaseUrl ++ PathAndQuery,
                      [{"User-Agent", "cferl (CloudFiles Erlang API)"},
                      {"X-Auth-Token", AuthToken}],
                      Method).
 
-%% Private functions
 build_json_query_string(PathAndQuery) when is_list(PathAndQuery) ->
   PathAndQuery ++
   case lists:member($?, PathAndQuery) of
