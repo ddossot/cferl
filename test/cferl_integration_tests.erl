@@ -36,7 +36,7 @@ run_tests(Username, ApiKey) ->
   
 connect_test(Username, ApiKey) ->
   {error, unauthorized} = cferl:connect("_fake_user_name", "_fake_api_key"),
-  ?PRINT_CODE("# Connect to Cloud Files (warning: the underlying authentication toke will only last for 24 hours!)"),
+  ?PRINT_CODE("# Connect to Cloud Files (warning: cache/use CloudFiles for a maximum of 24 hours!)"),
   ?PRINT_CALL({ok, CloudFiles} = cferl:connect(Username, ApiKey)),
   ?PRINT_CODE(""),
   CloudFiles.

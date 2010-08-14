@@ -1,4 +1,4 @@
 #!/bin/sh
 ./rebar get-deps clean compile eunit
-erl -boot start_sasl -config test/elog -pa .eunit -pa deps/ibrowse/ebin -s cferl_integration_tests -noshell
+erl -boot start_sasl -config test/elog -pa .eunit -pa ebin -pa deps/ibrowse/ebin -s cferl_integration_tests -noshell
 

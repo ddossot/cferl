@@ -11,7 +11,7 @@
 %%% @type cf_container_details() = record(). Record of type cf_container_details.
 %%% @type cferl_container() = term(). Reference to the cferl_container parameterized module.
 
--module(cferl_connection, [AuthToken, StorageUrl, CdnManagementUrl]).
+-module(cferl_connection, [Version, AuthToken, StorageUrl, CdnManagementUrl]).
 -author('David Dossot <david@dossot.net>').
 -include("cferl.hrl").
 
@@ -208,9 +208,9 @@ send_request(BaseUrl, Method, PathAndQuery, json)
 send_request(BaseUrl, PathAndQuery, Method)
   when is_list(BaseUrl), is_list(PathAndQuery), is_atom(Method) ->
     ibrowse:send_req(BaseUrl ++ PathAndQuery,
-                     [{"User-Agent", "cferl (CloudFiles Erlang API)"},
-                     {"X-Auth-Token", AuthToken}],
-                     Method).
+                     [{"User-Agent", "cferl (CloudFiles Erlang API) v" ++ Version},
+                      {"X-Auth-Token", AuthToken}],
+                      Method).
 
 build_json_query_string(PathAndQuery) when is_list(PathAndQuery) ->
   PathAndQuery ++
