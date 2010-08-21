@@ -63,7 +63,6 @@ container_tests(CloudFiles) ->
   ?PRINT_CODE("# Retrieve names of all containers currently CDN activated"),
   ?PRINT_CALL({ok, PublicNames} = CloudFiles:get_public_containers_names(active)),
   ?PRTFM_CODE("PublicNames=~p~n", [PublicNames]),
-  ?PRINT_CODE(""),
   
   ?PRINT_CODE("# Retrieve details for all existing containers (within the server limits)"),
   ?PRINT_CALL({ok, ContainersDetails} = CloudFiles:get_containers_details()),
@@ -109,6 +108,11 @@ container_tests(CloudFiles) ->
   ?PRINT_CODE(""),
   
   % TODO make public, call get_public_containers_names(active)
+  
+  ?PRINT_CODE("# Refresh an existing container"),
+  ?PRINT_CALL({ok, RefreshedContainer} = NewContainer:refresh()),
+  ?PRINT_CODE(""),
+  
   % TODO make private, call get_public_containers_names(active & all_time)
   
   ?PRINT_CODE("# Delete an existing container"),

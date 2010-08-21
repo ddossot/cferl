@@ -12,7 +12,7 @@
 
 %% Public API
 -export([name/0, bytes/0, count/0, is_empty/0, is_public/0,
-         delete/0]).
+         refresh/0, delete/0]).
 
 %% @doc Name of the current container.
 %% @spec name() -> binary()
@@ -39,6 +39,13 @@ is_empty() ->
 is_public() ->
   proplists:get_value(cdn_enabled, CdnDetails).
 
+%% @doc Refresh the current container reference.
+%% @spec refresh() -> {ok, Container} | Error
+%%   Container = cferl_container()
+%%   Error = cferl_error()
+refresh() ->
+  Connection:get_container(Name).
+
 %% TODO add: log_retention() cdn_url() cdn_ttl()
 
 %% @doc Delete the current container (which must be empty).
@@ -55,6 +62,6 @@ delete_result({ok, "409", _, _}) ->
 delete_result(Other) ->
   cferl_lib:error_result(Other).
 
-%% TODO add: make_public() make_private() refresh() set_log_retention()
+%% TODO add: make_public() make_private() set_log_retention()
 
 %% TODO add: object_exists() objects_details() objects_names() new_object()

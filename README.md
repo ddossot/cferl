@@ -49,7 +49,6 @@ The following, which is the output when running the integration tests, demonstra
     {ok,PublicNames}=CloudFiles:get_public_containers_names(active).
     PublicNames=[]
 
-    
     # Retrieve details for all existing containers (within the server limits)
     {ok,ContainersDetails}=CloudFiles:get_containers_details().
     # ContainersDetails is a list of #cf_container_details records
@@ -82,6 +81,9 @@ The following, which is the output when running the integration tests, demonstra
     0=NewContainer:count().
     true=NewContainer:is_empty().
     false=NewContainer:is_public().
+    
+    # Refresh an existing container
+    {ok,RefreshedContainer}=NewContainer:refresh().
     
     # Delete an existing container
     ok=NewContainer:delete().
