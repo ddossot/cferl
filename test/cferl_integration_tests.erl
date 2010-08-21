@@ -60,8 +60,10 @@ container_tests(CloudFiles) ->
   % retrieve 0 container
   {ok, []} = CloudFiles:get_containers_details(#cf_container_query_args{limit=0}),
   
-  % retrieve 0 public container name
-  {ok, []} = CloudFiles:get_public_containers_names(active),
+  ?PRINT_CODE("# Retrieve names of all containers currently CDN activated"),
+  ?PRINT_CALL({ok, PublicNames} = CloudFiles:get_public_containers_names(active)),
+  ?PRTFM_CODE("PublicNames=~p~n", [PublicNames]),
+  ?PRINT_CODE(""),
   
   ?PRINT_CODE("# Retrieve details for all existing containers (within the server limits)"),
   ?PRINT_CALL({ok, ContainersDetails} = CloudFiles:get_containers_details()),
@@ -78,7 +80,7 @@ container_tests(CloudFiles) ->
   ?PRINT_CODE(""),
   
   ?PRINT_CODE("# Get a container reference by name"),
-  ?PRINT_CALL({ok, Container} =  CloudFiles:get_container(<<"cferl-test">>)),
+  ?PRINT_CALL({ok, Container} = CloudFiles:get_container(Detail#cf_container_details.name)),
   ?PRINT_CODE(""),
 
   ?PRINT_CODE("# Get container details from its reference"),

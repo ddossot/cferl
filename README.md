@@ -30,7 +30,7 @@ cferl requires that the ssl and ibrowse applications be started prior to using i
 
 The following, which is the output when running the integration tests, demonstrates a typical usage of the API. Refer to the documentation for the complete reference.
 
-    # Connect to Cloud Files (warning: the underlying authentication toke will only last for 24 hours!)
+    # Connect to Cloud Files (warning: cache/use CloudFiles for a maximum of 24 hours!)
     {ok,CloudFiles}=cferl:connect(Username,ApiKey).
     
     # Retrieve the account information record
@@ -45,6 +45,11 @@ The following, which is the output when running the integration tests, demonstra
     {ok,ThreeNamesMax}=CloudFiles:get_containers_names(#cf_container_query_args{limit=3}).
     ThreeNamesMax=[<<"cferl-test">>]
 
+    # Retrieve names of all containers currently CDN activated
+    {ok,PublicNames}=CloudFiles:get_public_containers_names(active).
+    PublicNames=[]
+
+    
     # Retrieve details for all existing containers (within the server limits)
     {ok,ContainersDetails}=CloudFiles:get_containers_details().
     # ContainersDetails is a list of #cf_container_details records
@@ -55,7 +60,7 @@ The following, which is the output when running the integration tests, demonstra
     {ok,CfContainersDetails}=CloudFiles:get_containers_details(#cf_container_query_args{marker=<<"cf">>,limit=5}).
     
     # Get a container reference by name
-    {ok,Container}=CloudFiles:get_container(<<"cferl-test">>).
+    {ok,Container}=CloudFiles:get_container(Detail#cf_container_details.name).
     
     # Get container details from its reference
     ContainerName=Container:name().
