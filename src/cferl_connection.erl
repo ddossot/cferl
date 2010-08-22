@@ -52,11 +52,12 @@ get_containers_names() ->
   get_containers_names_result(Result).
 
 %% @doc Retrieve the containers names filtered by the provided query arguments.
+%%   If you supply the optional limit and marker arguments, the call will return the number of containers specified in limit, starting after the object named in marker.
 %% @spec get_containers_names(QueryArgs) -> {ok, [binary()]} | Error
 %%   QueryArgs = cf_container_query_args()
 %%   Error = cferl_error()
 get_containers_names(QueryArgs) when is_record(QueryArgs, cf_container_query_args) ->
-  QueryString = cferl_lib:query_args_to_string(QueryArgs),
+  QueryString = cferl_lib:container_query_args_to_string(QueryArgs),
   Result = send_storage_request(get, QueryString, raw),
   get_containers_names_result(Result).
 
@@ -79,7 +80,7 @@ get_containers_details() ->
 %%   QueryArgs = cf_container_query_args()
 %%   Error = cferl_error()
 get_containers_details(QueryArgs) when is_record(QueryArgs, cf_container_query_args) ->
-  QueryString = cferl_lib:query_args_to_string(QueryArgs),
+  QueryString = cferl_lib:container_query_args_to_string(QueryArgs),
   Result = send_storage_request(get, QueryString, json),
   get_containers_details_result(Result).
 

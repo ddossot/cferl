@@ -13,3 +13,4 @@
 -record(cf_container_details, {name, bytes, count}).
 
 -record(cf_container_query_args, {marker, limit}).
+-record(cf_container_cdn_config, {ttl = 86400, user_agent_acl, referrer_acl}).
