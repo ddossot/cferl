@@ -52,7 +52,7 @@ refresh() ->
 %% @spec delete() -> ok | Error
 %%   Error = {error, not_empty} | cferl_error()
 delete() ->
-  Result = Connection:send_storage_request(delete, <<"/", Name/binary>>, raw),
+  Result = Connection:send_storage_request(delete, Connection:get_container_path(Name), raw),
   delete_result(Result).
 
 delete_result({ok, "204", _, _}) ->

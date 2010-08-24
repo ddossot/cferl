@@ -13,7 +13,8 @@
 
 -export([error_result/1,
          caseless_get_proplist_value/2,
-         container_query_args_to_string/1, cdn_config_to_headers/1]).
+         container_query_args_to_string/1, cdn_config_to_headers/1,
+         url_encode/1]).
 
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
@@ -79,15 +80,17 @@ cdn_config_to_headers(#cf_container_cdn_config{ttl=Ttl, user_agent_acl=UaAcl, re
   
   filter_undefined(CdnConfigHeaders).
 
+%% @doc Encodes a binary URL element into a string.
+%% @spec url_encode(Bin::binary()) -> string().
+url_encode(Bin) when is_binary(Bin) ->
+  ibrowse_lib:url_encode(binary_to_list(Bin)).
+
 %% Private functions
 to_lower_case_keys(Proplist) ->
   [{string:to_lower(K), V} || {K, V} <- Proplist].
 
 filter_undefined(List) when is_list(List) ->
   lists:filter(fun(Entry) -> Entry =/= undefined end, List).
-
-url_encode(Bin) when is_binary(Bin) ->
-  ibrowse_lib:url_encode(binary_to_list(Bin)).
   
 %% Tests
 -ifdef(TEST).

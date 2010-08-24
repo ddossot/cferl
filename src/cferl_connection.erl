@@ -23,7 +23,7 @@
          get_public_containers_names/1]).
 
 %% Exposed for internal usage
--export([send_storage_request/3, send_cdn_management_request/3]).
+-export([send_storage_request/3, send_cdn_management_request/3, get_container_path/1]).
 
 %% @doc Retrieve the account information.
 %% @spec get_account_info() -> {ok, AccountInfo} | Error
@@ -105,7 +105,7 @@ get_containers_details_result(Other) ->
 %% @doc Test the existence of a container.
 %% @spec container_exists(Name::binary()) -> true | false
 container_exists(Name) when is_binary(Name) ->
-  Result = send_storage_request(head, <<"/", Name/binary>>, raw),
+  Result = send_storage_request(head, get_container_path(Name), raw),
   container_exists_result(Result).
 
 container_exists_result({ok, "204", _, _}) ->
@@ -118,7 +118,7 @@ container_exists_result(_) ->
 %%   Container = cferl_container()
 %%   Error = cferl_error()
 get_container(Name) when is_binary(Name) ->
-  Result = send_storage_request(head, <<"/", Name/binary>>, raw),
+  Result = send_storage_request(head, get_container_path(Name), raw),
   get_container_result(Name, Result).
 
 get_container_result(Name, {ok, "204", ResponseHeaders, _}) ->
@@ -130,7 +130,7 @@ get_container_result(_, Other) ->
   cferl_lib:error_result(Other).
 
 get_container_cdn_details(Name) ->
-  Result = send_cdn_management_request(head, <<"/", Name/binary>>, raw),
+  Result = send_cdn_management_request(head, get_container_path(Name), raw),
   get_container_cdn_details_result(Result).
 
 get_container_cdn_details_result({ok, "204", ResponseHeaders, _}) ->
@@ -153,7 +153,7 @@ build_cdn_details_proplist(Headers) ->
 %%   Container = cferl_container()
 %%   Error = {error, already_existing} | cferl_error()
 create_container(Name) when is_binary(Name) ->
-  Result = send_storage_request(put, <<"/", Name/binary>>, raw),
+  Result = send_storage_request(put, get_container_path(Name), raw),
   create_container_result(Name, Result).
 
 create_container_result(Name, {ok, "201", _, _}) ->
@@ -190,6 +190,10 @@ send_storage_request(Method, PathAndQuery, Accept)
 send_cdn_management_request(Method, PathAndQuery, Accept)
   when is_atom(Method), is_atom(Accept) ->
     send_request(CdnManagementUrl, Method, PathAndQuery, Accept).
+
+%% @hidden
+get_container_path(Name) when is_binary(Name) ->
+  "/" ++ cferl_lib:url_encode(Name).
   
 %% Private functions
 send_request(BaseUrl, Method, PathAndQuery, Accept)
@@ -244,3 +248,4 @@ list_to_bin(List) when is_list(List) ->
   list_to_binary(List);
 list_to_bin(_) ->
   <<>>.
+
