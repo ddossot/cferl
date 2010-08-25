@@ -107,12 +107,14 @@ container_tests(CloudFiles) ->
   ?PRINT_CALL(false = NewContainer:is_public()),
   ?PRINT_CODE(""),
   
+  ?PRINT_CODE("# Make the container public on the CDN (using the default TTL and ACLs)"),
   ?PRINT_CALL(ok = NewContainer:make_public()),
   ?PRINT_CODE(""),
   
-  ?PRINT_CODE("# Refresh an existing container"),
+  ?PRINT_CODE("# Refresh an existing container and check its properties changed"),
   ?PRINT_CALL({ok, RefreshedContainer} = NewContainer:refresh()),
   ?PRINT_CALL(true = RefreshedContainer:is_public()),
+  %% TODO use cdn_ttl and cdn_url
   ?PRINT_CODE(""),
   
   % TODO make private, call get_public_containers_names(active & all_time)
