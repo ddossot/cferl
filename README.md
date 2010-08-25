@@ -82,8 +82,11 @@ The following, which is the output when running the integration tests, demonstra
     true=NewContainer:is_empty().
     false=NewContainer:is_public().
     
+    ok=NewContainer:make_public().
+    
     # Refresh an existing container
     {ok,RefreshedContainer}=NewContainer:refresh().
+    true=RefreshedContainer:is_public().
     
     # Delete an existing container
     ok=NewContainer:delete().

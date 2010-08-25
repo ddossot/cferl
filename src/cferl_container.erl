@@ -6,12 +6,15 @@
 %%% Copyright (c) 2010 David Dossot
 %%%
 %%% @type cferl_error() = {error, not_found} | {error, unauthorized} | {error, {unexpected_response, Other}}.
+%%% @type cf_container_cdn_config = record(). Record of type cf_container_cdn_config.
 
 -module(cferl_container, [Connection, Name, Bytes, Count, CdnDetails]).
 -author('David Dossot <david@dossot.net>').
+-include("cferl.hrl").
 
 %% Public API
 -export([name/0, bytes/0, count/0, is_empty/0, is_public/0,
+         make_public/0, make_public/1,
          refresh/0, delete/0]).
 
 %% @doc Name of the current container.
@@ -39,14 +42,44 @@ is_empty() ->
 is_public() ->
   proplists:get_value(cdn_enabled, CdnDetails).
 
+%% TODO add: log_retention() cdn_url() cdn_ttl()
+%% TODO add: make_private() set_log_retention()
+
+%% @doc Make the current container publicly accessible on CDN, using the default configuration (ttl of 1 day and no ACL).
+%% @spec make_public() -> ok | Error
+%%   Error = cferl_error()
+make_public() ->
+  make_public(#cf_container_cdn_config{}).
+
+%% @doc Make the current container publicly accessible on CDN, using the provided configuration.
+%%   ttl is in seconds.
+%%   user_agent_acl and referrer_acl are Perl-compatible regular expression used to limit access to this container. 
+%% @spec make_public(CdnConfig) -> ok | Error
+%%   CdnConfig = cf_container_cdn_config()
+%%   Error = cferl_error()
+make_public(CdnConfig) when is_record(CdnConfig, cf_container_cdn_config) ->
+  PutResult = Connection:send_cdn_management_request(put, Connection:get_container_path(Name), raw),
+  make_public_put_result(CdnConfig, PutResult).
+
+make_public_put_result(CdnConfig, {ok, ResponseCode, _, _}) when ResponseCode =:= "201"; ResponseCode =:= "202" ->
+  CdnConfigHeaders = cferl_lib:cdn_config_to_headers(CdnConfig),
+  Headers = [{"X-CDN-Enabled", "True"} | CdnConfigHeaders],
+  PostResult = Connection:send_cdn_management_request(post, Connection:get_container_path(Name), Headers, raw),
+  make_public_post_result(PostResult);
+make_public_put_result(_, Other) ->
+  cferl_lib:error_result(Other).
+
+make_public_post_result({ok, ResponseCode, _, _}) when ResponseCode =:= "201"; ResponseCode =:= "202" ->
+  ok;
+make_public_post_result(Other) ->
+  cferl_lib:error_result(Other).
+
 %% @doc Refresh the current container reference.
 %% @spec refresh() -> {ok, Container} | Error
 %%   Container = cferl_container()
 %%   Error = cferl_error()
 refresh() ->
   Connection:get_container(Name).
-
-%% TODO add: log_retention() cdn_url() cdn_ttl()
 
 %% @doc Delete the current container (which must be empty).
 %% @spec delete() -> ok | Error
@@ -61,7 +94,5 @@ delete_result({ok, "409", _, _}) ->
   {error, not_empty};
 delete_result(Other) ->
   cferl_lib:error_result(Other).
-
-%% TODO add: make_public() make_private() set_log_retention()
 
 %% TODO add: object_exists() objects_details() objects_names() new_object()

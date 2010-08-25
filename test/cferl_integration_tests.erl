@@ -107,10 +107,12 @@ container_tests(CloudFiles) ->
   ?PRINT_CALL(false = NewContainer:is_public()),
   ?PRINT_CODE(""),
   
-  % TODO make public, call get_public_containers_names(active)
+  ?PRINT_CALL(ok = NewContainer:make_public()),
+  ?PRINT_CODE(""),
   
   ?PRINT_CODE("# Refresh an existing container"),
   ?PRINT_CALL({ok, RefreshedContainer} = NewContainer:refresh()),
+  ?PRINT_CALL(true = RefreshedContainer:is_public()),
   ?PRINT_CODE(""),
   
   % TODO make private, call get_public_containers_names(active & all_time)
