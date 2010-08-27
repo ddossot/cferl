@@ -18,9 +18,15 @@ Simply run:
 
     ./rebar get-deps compile eunit
 
-To generate the cferl documentation, run:
+Optinally, to generate the cferl documentation, run:
 
     ./rebar delete-deps doc
+
+Optinally, to run the integration tests (and generate the code samples visible below), run:
+
+    ./int_tests
+
+If you run the integration tests, you'll need your API key. Note that a test container will be created and some queries could take a while if you have lots of containers.
 
 
 Using
@@ -39,18 +45,16 @@ The following, which is the output when running the integration tests, demonstra
     
     # Retrieve names of all existing containers (within the limits imposed by Cloud Files server)
     {ok,Names}=CloudFiles:get_containers_names().
-    Names=[<<"cferl-test">>]
-
+    
     # Retrieve names of a maximum of 3 existing containers
     {ok,ThreeNamesMax}=CloudFiles:get_containers_names(#cf_container_query_args{limit=3}).
-    ThreeNamesMax=[<<"cferl-test">>]
-
+    
     # Retrieve names of all containers currently CDN activated
     {ok,PublicNames}=CloudFiles:get_public_containers_names(active).
-    PublicNames=[]
-
+    
     # Retrieve details for all existing containers (within the server limits)
     {ok,ContainersDetails}=CloudFiles:get_containers_details().
+    
     # ContainersDetails is a list of #cf_container_details records
     [Detail|_]=ContainersDetails.
     Detail = #cf_container_details{name=<<"cferl-test">>, bytes=360, count=1}
@@ -69,24 +73,33 @@ The following, which is the output when running the integration tests, demonstra
     # > Name: <<"cferl-test">> - Bytes: 360 - Size: 1 - IsEmpty: false
     
     # Check a container's existence
-    false=CloudFiles:container_exists(<<"new_container">>).
+    false=CloudFiles:container_exists(NewContainerName).
     
     # Create a new container
-    {ok,NewContainer}=CloudFiles:create_container(<<"new_container">>).
+    {ok,NewContainer}=CloudFiles:create_container(NewContainerName).
     
-    true=CloudFiles:container_exists(<<"new_container">>).
+    true=CloudFiles:container_exists(NewContainerName).
     
-    <<"new_container">>=NewContainer:name().
+    Check attributes of this newly created container
+    NewContainerName=NewContainer:name().
     0=NewContainer:bytes().
     0=NewContainer:count().
     true=NewContainer:is_empty().
     false=NewContainer:is_public().
+    <<>>=NewContainer:cdn_url().
+    0=NewContainer:cdn_ttl().
     
+    # Make the container public on the CDN (using the default TTL and ACLs)
     ok=NewContainer:make_public().
     
-    # Refresh an existing container
+    # Refresh an existing container and check its attributes
     {ok,RefreshedContainer}=NewContainer:refresh().
     true=RefreshedContainer:is_public().
+    
+    io:format("~s~n~n",[RefreshedContainer:cdn_url()]).
+    http://c0024041.cdn1.cloudfiles.rackspacecloud.com
+
+    86400=RefreshedContainer:cdn_ttl().
     
     # Delete an existing container
     ok=NewContainer:delete().

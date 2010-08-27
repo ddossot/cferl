@@ -51,21 +51,23 @@ print_account_info(CloudFiles) ->
 container_tests(CloudFiles) ->
   ?PRINT_CODE("# Retrieve names of all existing containers (within the limits imposed by Cloud Files server)"),
   ?PRINT_CALL({ok, Names} = CloudFiles:get_containers_names()),
-  ?PRTFM_CODE("Names=~p~n", [Names]),
+  ?PRINT_CODE(""),
   
   ?PRINT_CODE("# Retrieve names of a maximum of 3 existing containers"),
   ?PRINT_CALL({ok, ThreeNamesMax} = CloudFiles:get_containers_names(#cf_container_query_args{limit=3})),
-  ?PRTFM_CODE("ThreeNamesMax=~p~n", [ThreeNamesMax]),
+  ?PRINT_CODE(""),
   
   % retrieve 0 container
   {ok, []} = CloudFiles:get_containers_details(#cf_container_query_args{limit=0}),
   
   ?PRINT_CODE("# Retrieve names of all containers currently CDN activated"),
   ?PRINT_CALL({ok, PublicNames} = CloudFiles:get_public_containers_names(active)),
-  ?PRTFM_CODE("PublicNames=~p~n", [PublicNames]),
+  ?PRINT_CODE(""),
   
   ?PRINT_CODE("# Retrieve details for all existing containers (within the server limits)"),
   ?PRINT_CALL({ok, ContainersDetails} = CloudFiles:get_containers_details()),
+  ?PRINT_CODE(""),
+
   ?PRINT_CODE("# ContainersDetails is a list of #cf_container_details records"),
   ?PRINT_CALL([Detail|_]=ContainersDetails),
   ?PRTFM_CODE("Detail = #cf_container_details{name=~p, bytes=~B, count=~B}",
@@ -91,30 +93,38 @@ container_tests(CloudFiles) ->
               [ContainerName, ContainerBytes, ContainerSize, ContainerIsEmpty]),
   ?PRINT_CODE(""),
 
+  NewContainerName = make_new_container_name(),
+  
   ?PRINT_CODE("# Check a container's existence"),
-  ?PRINT_CALL(false = CloudFiles:container_exists(<<"new_container">>)),
+  ?PRINT_CALL(false = CloudFiles:container_exists(NewContainerName)),
   ?PRINT_CODE(""),
 
   ?PRINT_CODE("# Create a new container"),
-  ?PRINT_CALL({ok, NewContainer} = CloudFiles:create_container(<<"new_container">>)),
+  ?PRINT_CALL({ok, NewContainer} = CloudFiles:create_container(NewContainerName)),
   ?PRINT_CODE(""),
-  ?PRINT_CALL(true = CloudFiles:container_exists(<<"new_container">>)),
+  ?PRINT_CALL(true = CloudFiles:container_exists(NewContainerName)),
   ?PRINT_CODE(""),
-  ?PRINT_CALL(<<"new_container">> = NewContainer:name()),
+  
+  ?PRINT_CODE("Check attributes of this newly created container"),
+  ?PRINT_CALL(NewContainerName = NewContainer:name()),
   ?PRINT_CALL(0 = NewContainer:bytes()),
   ?PRINT_CALL(0 = NewContainer:count()),
   ?PRINT_CALL(true = NewContainer:is_empty()),
   ?PRINT_CALL(false = NewContainer:is_public()),
+  ?PRINT_CALL(<<>> = NewContainer:cdn_url()),
+  ?PRINT_CALL(0 = NewContainer:cdn_ttl()),
   ?PRINT_CODE(""),
   
   ?PRINT_CODE("# Make the container public on the CDN (using the default TTL and ACLs)"),
   ?PRINT_CALL(ok = NewContainer:make_public()),
   ?PRINT_CODE(""),
   
-  ?PRINT_CODE("# Refresh an existing container and check its properties changed"),
+  ?PRINT_CODE("# Refresh an existing container and check its attributes"),
   ?PRINT_CALL({ok, RefreshedContainer} = NewContainer:refresh()),
   ?PRINT_CALL(true = RefreshedContainer:is_public()),
-  %% TODO use cdn_ttl and cdn_url
+  ?PRINT_CODE(""),
+  ?PRINT_CALL(io:format("    ~s~n~n", [RefreshedContainer:cdn_url()])),
+  ?PRINT_CALL(86400 = RefreshedContainer:cdn_ttl()),
   ?PRINT_CODE(""),
   
   % TODO make private, call get_public_containers_names(active & all_time)
@@ -127,4 +137,17 @@ container_tests(CloudFiles) ->
   {error, not_found} = NewContainer:delete(),
   
   ok.
+  
+make_new_container_name() ->
+  {ok, HostName} = inet:gethostname(),
+  {M,S,U} = now(),
+  ContainerName = "cferl_int_test"
+               ++ integer_to_list(M)
+               ++ "-"
+               ++ integer_to_list(S)
+               ++ "-"
+               ++ integer_to_list(U)
+               ++ "-"
+               ++ HostName,
+  list_to_binary(ContainerName).
 
