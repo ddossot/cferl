@@ -13,7 +13,7 @@
 -include("cferl.hrl").
 
 %% Public API
--export([name/0, bytes/0, count/0, is_empty/0, is_public/0, cdn_url/0, cdn_ttl/0,
+-export([name/0, bytes/0, count/0, is_empty/0, is_public/0, cdn_url/0, cdn_ttl/0, log_retention/0,
          make_public/0, make_public/1,
          refresh/0, delete/0]).
 
@@ -52,7 +52,11 @@ cdn_url() ->
 cdn_ttl() ->
   proplists:get_value(ttl, CdnDetails).
 
-%% TODO add: log_retention()
+%% @doc Determine if log retention is enabled on this container (which must be public).
+%% @spec log_retention() -> true | false
+log_retention() ->
+  is_public() andalso proplists:get_value(log_retention, CdnDetails).
+
 %% TODO add: make_private() set_log_retention()
 
 %% @doc Make the current container publicly accessible on CDN, using the default configuration (ttl of 1 day and no ACL).

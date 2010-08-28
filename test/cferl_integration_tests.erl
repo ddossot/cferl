@@ -113,6 +113,7 @@ container_tests(CloudFiles) ->
   ?PRINT_CALL(false = NewContainer:is_public()),
   ?PRINT_CALL(<<>> = NewContainer:cdn_url()),
   ?PRINT_CALL(0 = NewContainer:cdn_ttl()),
+  ?PRINT_CALL(false = NewContainer:log_retention()),
   ?PRINT_CODE(""),
   
   ?PRINT_CODE("# Make the container public on the CDN (using the default TTL and ACLs)"),

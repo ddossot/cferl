@@ -88,6 +88,7 @@ The following, which is the output when running the integration tests, demonstra
     false=NewContainer:is_public().
     <<>>=NewContainer:cdn_url().
     0=NewContainer:cdn_ttl().
+    false=NewContainer:log_retention().
     
     # Make the container public on the CDN (using the default TTL and ACLs)
     ok=NewContainer:make_public().
