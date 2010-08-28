@@ -14,7 +14,7 @@
 
 %% Public API
 -export([name/0, bytes/0, count/0, is_empty/0, is_public/0, cdn_url/0, cdn_ttl/0, log_retention/0,
-         make_public/0, make_public/1, make_private/0,
+         make_public/0, make_public/1, make_private/0, set_log_retention/1,
          refresh/0, delete/0]).
 
 %% @doc Name of the current container.
@@ -86,12 +86,9 @@ make_public_post_result({ok, ResponseCode, _, _}) when ResponseCode =:= "201"; R
 make_public_post_result(Other) ->
   cferl_lib:error_result(Other).
 
-%% TODO add: set_log_retention()
-
 %% @doc Make the current container private.
 %%   If it was previously public, it will remain accessible on the CDN until its TTL is reached. 
 %% @spec make_private() -> ok | Error
-%%   CdnConfig = cf_container_cdn_config()
 %%   Error = cferl_error()
 make_private() ->
   Headers = [{"X-CDN-Enabled", "False"}],
@@ -101,6 +98,24 @@ make_private() ->
 make_private_result({ok, ResponseCode, _, _}) when ResponseCode =:= "201"; ResponseCode =:= "202" ->
   ok;
 make_private_result(Other) ->
+  cferl_lib:error_result(Other).
+
+%% @doc Activate or deactivate log retention for current container.
+%% @spec set_log_retention(true | false) -> ok | Error
+%%   Error = cferl_error()
+set_log_retention(true) ->
+  do_set_log_retention("True");
+set_log_retention(false) ->
+  do_set_log_retention("False").
+  
+do_set_log_retention(State) ->
+  Headers = [{"x-log-retention", State}],
+  PostResult = Connection:send_cdn_management_request(post, Connection:get_container_path(Name), Headers, raw),
+  set_log_retention_result(PostResult).
+  
+set_log_retention_result({ok, ResponseCode, _, _}) when ResponseCode =:= "201"; ResponseCode =:= "202" ->
+  ok;
+set_log_retention_result(Other) ->
   cferl_lib:error_result(Other).
 
 %% @doc Refresh the current container reference.

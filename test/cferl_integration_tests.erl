@@ -120,19 +120,25 @@ container_tests(CloudFiles) ->
   ?PRINT_CALL(ok = NewContainer:make_public()),
   ?PRINT_CODE(""),
   
+  ?PRINT_CODE("# Activate log retention on the new container"),
+  ?PRINT_CALL(ok = NewContainer:set_log_retention(true)),
+  ?PRINT_CODE(""),
+  
   ?PRINT_CODE("# Refresh an existing container and check its attributes"),
   ?PRINT_CALL({ok, RefreshedContainer} = NewContainer:refresh()),
   ?PRINT_CALL(true = RefreshedContainer:is_public()),
   ?PRINT_CODE(""),
   ?PRINT_CALL(io:format("    ~s~n~n", [RefreshedContainer:cdn_url()])),
   ?PRINT_CALL(86400 = RefreshedContainer:cdn_ttl()),
+  ?PRINT_CALL(true = RefreshedContainer:log_retention()),
   ?PRINT_CODE(""),
+
+  % ensure log retention can be stoped
+  ok = RefreshedContainer:set_log_retention(false),
   
   ?PRINT_CODE("# Make the container private"),
   ?PRINT_CALL(ok = RefreshedContainer:make_private()),
   ?PRINT_CODE(""),
-  
-  % TODO call get_public_containers_names(active & all_time)
   
   ?PRINT_CODE("# Delete an existing container"),
   ?PRINT_CALL(ok = RefreshedContainer:delete()),

@@ -36,6 +36,7 @@ cferl requires that the ssl and ibrowse applications be started prior to using i
 
 The following, which is the output when running the integration tests, demonstrates a typical usage of the API. Refer to the documentation for the complete reference.
 
+
     # Connect to Cloud Files (warning: cache/use CloudFiles for a maximum of 24 hours!)
     {ok,CloudFiles}=cferl:connect(Username,ApiKey).
     
@@ -93,14 +94,18 @@ The following, which is the output when running the integration tests, demonstra
     # Make the container public on the CDN (using the default TTL and ACLs)
     ok=NewContainer:make_public().
     
+    # Activate log retention on the new container
+    ok=NewContainer:set_log_retention(true).
+    
     # Refresh an existing container and check its attributes
     {ok,RefreshedContainer}=NewContainer:refresh().
     true=RefreshedContainer:is_public().
     
     io:format("~s~n~n",[RefreshedContainer:cdn_url()]).
-    http://c0024041.cdn1.cloudfiles.rackspacecloud.com
+    http://c0024290.cdn1.cloudfiles.rackspacecloud.com
 
     86400=RefreshedContainer:cdn_ttl().
+    true=RefreshedContainer:log_retention().
     
     # Make the container private
     ok=RefreshedContainer:make_private().
