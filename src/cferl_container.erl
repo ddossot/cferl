@@ -14,7 +14,7 @@
 
 %% Public API
 -export([name/0, bytes/0, count/0, is_empty/0, is_public/0, cdn_url/0, cdn_ttl/0, log_retention/0,
-         make_public/0, make_public/1,
+         make_public/0, make_public/1, make_private/0,
          refresh/0, delete/0]).
 
 %% @doc Name of the current container.
@@ -57,8 +57,6 @@ cdn_ttl() ->
 log_retention() ->
   is_public() andalso proplists:get_value(log_retention, CdnDetails).
 
-%% TODO add: make_private() set_log_retention()
-
 %% @doc Make the current container publicly accessible on CDN, using the default configuration (ttl of 1 day and no ACL).
 %% @spec make_public() -> ok | Error
 %%   Error = cferl_error()
@@ -86,6 +84,23 @@ make_public_put_result(_, Other) ->
 make_public_post_result({ok, ResponseCode, _, _}) when ResponseCode =:= "201"; ResponseCode =:= "202" ->
   ok;
 make_public_post_result(Other) ->
+  cferl_lib:error_result(Other).
+
+%% TODO add: set_log_retention()
+
+%% @doc Make the current container private.
+%%   If it was previously public, it will remain accessible on the CDN until its TTL is reached. 
+%% @spec make_private() -> ok | Error
+%%   CdnConfig = cf_container_cdn_config()
+%%   Error = cferl_error()
+make_private() ->
+  Headers = [{"X-CDN-Enabled", "False"}],
+  PostResult = Connection:send_cdn_management_request(post, Connection:get_container_path(Name), Headers, raw),
+  make_private_result(PostResult).
+
+make_private_result({ok, ResponseCode, _, _}) when ResponseCode =:= "201"; ResponseCode =:= "202" ->
+  ok;
+make_private_result(Other) ->
   cferl_lib:error_result(Other).
 
 %% @doc Refresh the current container reference.

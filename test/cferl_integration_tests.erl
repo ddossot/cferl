@@ -128,10 +128,14 @@ container_tests(CloudFiles) ->
   ?PRINT_CALL(86400 = RefreshedContainer:cdn_ttl()),
   ?PRINT_CODE(""),
   
-  % TODO make private, call get_public_containers_names(active & all_time)
+  ?PRINT_CODE("# Make the container private"),
+  ?PRINT_CALL(ok = RefreshedContainer:make_private()),
+  ?PRINT_CODE(""),
+  
+  % TODO call get_public_containers_names(active & all_time)
   
   ?PRINT_CODE("# Delete an existing container"),
-  ?PRINT_CALL(ok = NewContainer:delete()),
+  ?PRINT_CALL(ok = RefreshedContainer:delete()),
   ?PRINT_CODE(""),
   
   % ensure deleting missing container is properly handled

@@ -102,8 +102,11 @@ The following, which is the output when running the integration tests, demonstra
 
     86400=RefreshedContainer:cdn_ttl().
     
+    # Make the container private
+    ok=RefreshedContainer:make_private().
+    
     # Delete an existing container
-    ok=NewContainer:delete().
+    ok=RefreshedContainer:delete().
 
 
 More information
