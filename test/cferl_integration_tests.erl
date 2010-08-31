@@ -61,7 +61,11 @@ container_tests(CloudFiles) ->
   {ok, []} = CloudFiles:get_containers_details(#cf_container_query_args{limit=0}),
   
   ?PRINT_CODE("# Retrieve names of all containers currently CDN activated"),
-  ?PRINT_CALL({ok, PublicNames} = CloudFiles:get_public_containers_names(active)),
+  ?PRINT_CALL({ok, CurrentPublicNames} = CloudFiles:get_public_containers_names(active)),
+  ?PRINT_CODE(""),
+  
+  ?PRINT_CODE("# Retrieve names of all containers that are currently or have been CDN activated"),
+  ?PRINT_CALL({ok, AllTimePublicNames} = CloudFiles:get_public_containers_names(all_time)),
   ?PRINT_CODE(""),
   
   ?PRINT_CODE("# Retrieve details for all existing containers (within the server limits)"),

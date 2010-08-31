@@ -26,7 +26,7 @@ Optinally, to run the integration tests (and generate the code samples visible b
 
     ./int_tests
 
-If you run the integration tests, you'll need your API key. Note that a test container will be created and some queries could take a while if you have lots of containers.
+If you run the integration tests, you'll need your API key and at least one pre-existing container. Note that a test container will be created and some queries could take a while if you have lots of containers.
 
 
 Using
@@ -51,7 +51,10 @@ The following, which is the output when running the integration tests, demonstra
     {ok,ThreeNamesMax}=CloudFiles:get_containers_names(#cf_container_query_args{limit=3}).
     
     # Retrieve names of all containers currently CDN activated
-    {ok,PublicNames}=CloudFiles:get_public_containers_names(active).
+    {ok,CurrentPublicNames}=CloudFiles:get_public_containers_names(active).
+    
+    # Retrieve names of all containers that are currently or have been CDN activated
+    {ok,AllTimePublicNames}=CloudFiles:get_public_containers_names(all_time).
     
     # Retrieve details for all existing containers (within the server limits)
     {ok,ContainersDetails}=CloudFiles:get_containers_details().
@@ -102,7 +105,7 @@ The following, which is the output when running the integration tests, demonstra
     true=RefreshedContainer:is_public().
     
     io:format("~s~n~n",[RefreshedContainer:cdn_url()]).
-    http://c0024290.cdn1.cloudfiles.rackspacecloud.com
+    http://c0024448.cdn1.cloudfiles.rackspacecloud.com
 
     86400=RefreshedContainer:cdn_ttl().
     true=RefreshedContainer:log_retention().
@@ -112,7 +115,7 @@ The following, which is the output when running the integration tests, demonstra
     
     # Delete an existing container
     ok=RefreshedContainer:delete().
-
+    
 
 More information
 ----------------
