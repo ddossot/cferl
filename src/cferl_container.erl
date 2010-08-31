@@ -129,14 +129,6 @@ refresh() ->
 %% @spec delete() -> ok | Error
 %%   Error = {error, not_empty} | cferl_error()
 delete() ->
-  Result = Connection:send_storage_request(delete, Connection:get_container_path(Name), raw),
-  delete_result(Result).
+  Connection:delete_container(Name).
 
-delete_result({ok, "204", _, _}) ->
-  ok;
-delete_result({ok, "409", _, _}) ->
-  {error, not_empty};
-delete_result(Other) ->
-  cferl_lib:error_result(Other).
-
-%% TODO add: object_exists() objects_details() objects_names() new_object()
+%% TODO add: get_objects_names/0 /1 get_objects_details/0 /1 object_exists/1 create_object/1 delete_object/1

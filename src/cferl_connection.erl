@@ -19,7 +19,7 @@
 -export([get_account_info/0,
          get_containers_names/0, get_containers_names/1,
          get_containers_details/0, get_containers_details/1,
-         container_exists/1, get_container/1, create_container/1,
+         container_exists/1, get_container/1, create_container/1, delete_container/1,
          get_public_containers_names/1]).
 
 %% Exposed for internal usage
@@ -165,6 +165,20 @@ create_container_result(_, {ok, "202", _, _}) ->
 create_container_result(_, Other) ->
   cferl_lib:error_result(Other).
   
+%% @doc Delete a container (which must be empty).
+%% @spec delete_container(Name::binary) -> ok | Error
+%%   Error = {error, not_empty} | cferl_error()
+delete_container(Name) when is_binary(Name) ->
+  Result = send_storage_request(delete, get_container_path(Name), raw),
+  delete_container_result(Result).
+
+delete_container_result({ok, "204", _, _}) ->
+  ok;
+delete_container_result({ok, "409", _, _}) ->
+  {error, not_empty};
+delete_container_result(Other) ->
+  cferl_lib:error_result(Other).
+
 %% @doc Retrieve the names of public (CDN-enabled) containers, whether they are still public (active) or happen to have been exposed in the past(all_time).
 %% @spec get_public_containers_names(TimeFilter::active | all_time) -> {ok, [binary()]} | Error
 %%   Error = cferl_error()
