@@ -14,6 +14,7 @@
 -export([error_result/1,
          caseless_get_proplist_value/2,
          container_query_args_to_string/1, cdn_config_to_headers/1,
+         object_query_args_to_string/1,
          url_encode/1]).
 
 -ifdef(TEST).
@@ -37,8 +38,8 @@ caseless_get_proplist_value(Key, Proplist) when is_list(Key), is_list(Proplist) 
   proplists:get_value(string:to_lower(Key),
                       to_lower_case_keys(Proplist)).
 
-%% @doc Turn a cf_container_query_args record into an URL encoded query string.
-%% @spec query_args_to_string(QueryArgs::record()) -> string()
+%% @doc Convert a cf_container_query_args record into an URL encoded query string.
+%% @spec container_query_args_to_string(QueryArgs::record()) -> string()
 container_query_args_to_string(#cf_container_query_args{marker=Marker, limit=Limit}) ->
   QueryElements =
     [
@@ -54,12 +55,7 @@ container_query_args_to_string(#cf_container_query_args{marker=Marker, limit=Lim
     
   query_args_to_string(string:join(filter_undefined(QueryElements), "&")).
     
-query_args_to_string("") ->
-  "";
-query_args_to_string(QueryString) ->
-  "?" ++ QueryString.
-
-%% @doc Turn a cf_container_cdn_config into a list of HTTP headers.
+%% @doc Convert a cf_container_cdn_config into a list of HTTP headers.
 %% @spec cdn_config_to_headers(CdnConfig::record()) -> [{HeaderName, HeaderValue}]
 cdn_config_to_headers(#cf_container_cdn_config{ttl=Ttl, user_agent_acl=UaAcl, referrer_acl = RAcl}) ->
   CdnConfigHeaders =
@@ -80,12 +76,42 @@ cdn_config_to_headers(#cf_container_cdn_config{ttl=Ttl, user_agent_acl=UaAcl, re
   
   filter_undefined(CdnConfigHeaders).
 
+%% @doc Convert a cf_object_query_args record into an URL encoded query string.
+%% @spec object_query_args_to_string(QueryArgs::record()) -> string()
+object_query_args_to_string(#cf_object_query_args{marker=Marker, limit=Limit, prefix=Prefix, path=Path}) ->
+  QueryElements =
+    [
+      case Marker of
+        _ when is_integer(Marker) -> "marker=" ++ integer_to_list(Marker);
+        _ -> undefined
+      end,
+      case Limit of
+        _ when is_integer(Limit) -> "limit=" ++ integer_to_list(Limit);
+        _ -> undefined
+      end,
+      case Prefix of
+        _ when is_binary(Prefix) -> "prefix=" ++ url_encode(Prefix);
+        _ -> undefined
+      end,
+      case Path of
+        _ when is_binary(Path) -> "path=" ++ url_encode(Path);
+        _ -> undefined
+      end
+    ],
+    
+  query_args_to_string(string:join(filter_undefined(QueryElements), "&")).
+
 %% @doc Encodes a binary URL element into a string.
 %% @spec url_encode(Bin::binary()) -> string().
 url_encode(Bin) when is_binary(Bin) ->
   ibrowse_lib:url_encode(binary_to_list(Bin)).
 
 %% Private functions
+query_args_to_string("") ->
+  "";
+query_args_to_string(QueryString) ->
+  "?" ++ QueryString.
+
 to_lower_case_keys(Proplist) ->
   [{string:to_lower(K), V} || {K, V} <- Proplist].
 
@@ -119,4 +145,16 @@ cdn_config_to_headers_test() ->
   ?assert([{"X-TTL", "86400"}] == cdn_config_to_headers(#cf_container_cdn_config{referrer_acl=bad_value})),
   ok.
   
+object_query_args_to_string_test() ->
+  ?assert("" == object_query_args_to_string(#cf_object_query_args{})),
+  ?assert("?limit=12" == object_query_args_to_string(#cf_object_query_args{limit=12})),
+  ?assert("?marker=2" == object_query_args_to_string(#cf_object_query_args{marker=2})),
+  ?assert("?marker=3&limit=25" == object_query_args_to_string(#cf_object_query_args{limit=25,marker=3})),
+  ?assert("?marker=3&limit=25&prefix=prefoo&path=patbar" == object_query_args_to_string(#cf_object_query_args{prefix= <<"prefoo">>, path= <<"patbar">>, limit=25,marker=3})),
+  ?assert("" == object_query_args_to_string(#cf_object_query_args{marker="bad_value"})),
+  ?assert("" == object_query_args_to_string(#cf_object_query_args{limit=bad_value})),
+  ?assert("" == object_query_args_to_string(#cf_object_query_args{prefix=123})),
+  ?assert("" == object_query_args_to_string(#cf_object_query_args{path=true})),
+  ok.
+
 -endif.
