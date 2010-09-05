@@ -7,6 +7,7 @@
 %%%
 %%% @type cferl_error() = {error, not_found} | {error, unauthorized} | {error, {unexpected_response, Other}}.
 %%% @type cf_container_cdn_config = record(). Record of type cf_container_cdn_config.
+%%% @type cf_object_query_args() = record(). Record of type cf_object_query_args.
 
 -module(cferl_container, [Connection, Name, Bytes, Count, CdnDetails]).
 -author('David Dossot <david@dossot.net>').
@@ -15,7 +16,8 @@
 %% Public API
 -export([name/0, bytes/0, count/0, is_empty/0, is_public/0, cdn_url/0, cdn_ttl/0, log_retention/0,
          make_public/0, make_public/1, make_private/0, set_log_retention/1,
-         refresh/0, delete/0]).
+         refresh/0, delete/0,
+         get_objects_names/0, get_objects_names/1]).
 
 %% @doc Name of the current container.
 %% @spec name() -> binary()
@@ -70,18 +72,26 @@ make_public() ->
 %%   CdnConfig = cf_container_cdn_config()
 %%   Error = cferl_error()
 make_public(CdnConfig) when is_record(CdnConfig, cf_container_cdn_config) ->
-  PutResult = Connection:send_cdn_management_request(put, Connection:get_container_path(Name), raw),
+  PutResult = Connection:send_cdn_management_request(put,
+                                                     Connection:get_container_path(Name),
+                                                     raw),
   make_public_put_result(CdnConfig, PutResult).
 
-make_public_put_result(CdnConfig, {ok, ResponseCode, _, _}) when ResponseCode =:= "201"; ResponseCode =:= "202" ->
+make_public_put_result(CdnConfig, {ok, ResponseCode, _, _})
+  when ResponseCode =:= "201"; ResponseCode =:= "202" ->
+  
   CdnConfigHeaders = cferl_lib:cdn_config_to_headers(CdnConfig),
   Headers = [{"X-CDN-Enabled", "True"} | CdnConfigHeaders],
-  PostResult = Connection:send_cdn_management_request(post, Connection:get_container_path(Name), Headers, raw),
+  PostResult = Connection:send_cdn_management_request(post,
+                                                      Connection:get_container_path(Name),
+                                                      Headers,
+                                                      raw),
   make_public_post_result(PostResult);
 make_public_put_result(_, Other) ->
   cferl_lib:error_result(Other).
 
-make_public_post_result({ok, ResponseCode, _, _}) when ResponseCode =:= "201"; ResponseCode =:= "202" ->
+make_public_post_result({ok, ResponseCode, _, _})
+  when ResponseCode =:= "201"; ResponseCode =:= "202" ->
   ok;
 make_public_post_result(Other) ->
   cferl_lib:error_result(Other).
@@ -92,10 +102,14 @@ make_public_post_result(Other) ->
 %%   Error = cferl_error()
 make_private() ->
   Headers = [{"X-CDN-Enabled", "False"}],
-  PostResult = Connection:send_cdn_management_request(post, Connection:get_container_path(Name), Headers, raw),
+  PostResult = Connection:send_cdn_management_request(post,
+                                                      Connection:get_container_path(Name),
+                                                      Headers,
+                                                      raw),
   make_private_result(PostResult).
 
-make_private_result({ok, ResponseCode, _, _}) when ResponseCode =:= "201"; ResponseCode =:= "202" ->
+make_private_result({ok, ResponseCode, _, _})
+  when ResponseCode =:= "201"; ResponseCode =:= "202" ->
   ok;
 make_private_result(Other) ->
   cferl_lib:error_result(Other).
@@ -110,10 +124,14 @@ set_log_retention(false) ->
   
 do_set_log_retention(State) ->
   Headers = [{"x-log-retention", State}],
-  PostResult = Connection:send_cdn_management_request(post, Connection:get_container_path(Name), Headers, raw),
+  PostResult = Connection:send_cdn_management_request(post,
+                                                      Connection:get_container_path(Name),
+                                                      Headers,
+                                                      raw),
   set_log_retention_result(PostResult).
   
-set_log_retention_result({ok, ResponseCode, _, _}) when ResponseCode =:= "201"; ResponseCode =:= "202" ->
+set_log_retention_result({ok, ResponseCode, _, _})
+  when ResponseCode =:= "201"; ResponseCode =:= "202" ->
   ok;
 set_log_retention_result(Other) ->
   cferl_lib:error_result(Other).
@@ -131,4 +149,33 @@ refresh() ->
 delete() ->
   Connection:delete_container(Name).
 
-%% TODO add: get_objects_names/0 /1 get_objects_details/0 /1 object_exists/1 create_object/1 delete_object/1
+%% @doc Retrieve all the object names in the current container (within the limits imposed by Cloud Files server).
+%% @spec get_objects_names() -> {ok, [binary()]} | Error
+%%   Error = cferl_error()
+get_objects_names() ->
+  Result = Connection:send_storage_request(get, Connection:get_container_path(Name), raw),
+  get_objects_names_result(Result).
+
+%% @doc Retrieve the object names in the current container, filtered by the provided query arguments.
+%%   If you supply the optional limit, marker, prefix or path arguments, the call will return the number of objects specified in limit,
+%%   starting at the object index specified in marker, selecting objects whose names start with prefix or search within the pseudo-filesystem
+%%   path.
+%% @spec get_objects_names(QueryArgs) -> {ok, [binary()]} | Error
+%%   QueryArgs = cf_object_query_args()
+%%   Error = cferl_error()
+get_objects_names(QueryArgs) when is_record(QueryArgs, cf_object_query_args) ->
+  QueryString = cferl_lib:object_query_args_to_string(QueryArgs),
+  Result = Connection:send_storage_request(get,
+                                           Connection:get_container_path(Name) ++ QueryString,
+                                           raw),
+  get_objects_names_result(Result).
+
+get_objects_names_result({ok, "204", _, _}) ->
+  {ok, []};
+get_objects_names_result({ok, "200", _, ResponseBody}) ->
+  {ok, [list_to_binary(Name) || Name <- string:tokens(ResponseBody, "\n")]};
+get_objects_names_result(Other) ->
+  cferl_lib:error_result(Other).
+
+%% TODO add: get_objects_details/0 /1 object_exists/1 create_object/1 delete_object/1
+

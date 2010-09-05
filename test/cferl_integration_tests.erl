@@ -93,10 +93,11 @@ container_tests(CloudFiles) ->
   ?PRINT_CALL(ContainerBytes = Container:bytes()),
   ?PRINT_CALL(ContainerSize = Container:count()),
   ?PRINT_CALL(ContainerIsEmpty = Container:is_empty()),
-  ?PRTFM_CODE("# > Name: ~p - Bytes: ~p - Size: ~p - IsEmpty: ~p",
+  ?PRINT_CODE(""),
+  ?PRTFM_CODE("# -> Name: ~p - Bytes: ~p - Size: ~p - IsEmpty: ~p",
               [ContainerName, ContainerBytes, ContainerSize, ContainerIsEmpty]),
   ?PRINT_CODE(""),
-
+  
   NewContainerName = make_new_container_name(),
   
   ?PRINT_CODE("# Check a container's existence"),
@@ -136,6 +137,13 @@ container_tests(CloudFiles) ->
   ?PRINT_CALL(86400 = RefreshedContainer:cdn_ttl()),
   ?PRINT_CALL(true = RefreshedContainer:log_retention()),
   ?PRINT_CODE(""),
+  
+  % ensure container has no object name
+  {ok, []} = RefreshedContainer:get_objects_names(),
+  {ok, []} = RefreshedContainer:get_objects_names(#cf_object_query_args{limit=10}),
+  
+  % TODO create object
+  % TODO test get_objects_names/0 and get_objects_names/1
 
   % ensure log retention can be stoped
   ok = RefreshedContainer:set_log_retention(false),
