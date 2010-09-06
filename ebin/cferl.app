@@ -1,11 +1,12 @@
 {application,
       cferl,
         [{description, "Rackspace Cloud Files client application"},
-         {vsn, "0.1"},
+         {vsn, "0.9"},
          {modules, [
                      cferl,
                      cferl_connection,
                      cferl_container,
+                     cferl_object,
                      cferl_lib,
                      mochijson2,
                      mochinum

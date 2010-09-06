@@ -24,8 +24,7 @@
 
 %% Exposed for internal usage
 -export([send_storage_request/3,
-         send_cdn_management_request/3, send_cdn_management_request/4,
-         get_container_path/1]).
+         send_cdn_management_request/3, send_cdn_management_request/4]).
 
 %% @doc Retrieve the account information.
 %% @spec get_account_info() -> {ok, AccountInfo} | Error
@@ -123,10 +122,13 @@ get_container(Name) when is_binary(Name) ->
   get_container_result(Name, Result).
 
 get_container_result(Name, {ok, "204", ResponseHeaders, _}) ->
-  Bytes = get_int_header("x-container-bytes-used", ResponseHeaders),
-  Count = get_int_header("x-container-object-count", ResponseHeaders),
+  ContainerDetails = #cf_container_details{
+        name = Name,
+        bytes = get_int_header("x-container-bytes-used", ResponseHeaders),
+        count = get_int_header("x-container-object-count", ResponseHeaders)
+      },
   {ok, CdnDetails} = get_container_cdn_details(Name),
-  {ok, cferl_container:new(THIS, Name, Bytes, Count, CdnDetails)};
+  {ok, cferl_container:new(THIS, ContainerDetails, get_container_path(Name), CdnDetails)};
 get_container_result(_, Other) ->
   cferl_lib:error_result(Other).
 
