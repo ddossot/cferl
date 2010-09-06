@@ -74,8 +74,7 @@ get_containers_names_result(Other) ->
 %% @spec get_containers_details() -> {ok, [cf_container_details()]} | Error
 %%   Error = cferl_error()
 get_containers_details() ->
-  Result = send_storage_request(get, "", json),
-  get_containers_details_result(Result).
+  get_containers_details(#cf_container_query_args{}).
 
 %% @doc Retrieve the containers information filtered by the provided query arguments.
 %% @spec get_containers_details(QueryArgs) -> {ok, [cf_container_details()]} | Error
@@ -89,7 +88,7 @@ get_containers_details(QueryArgs) when is_record(QueryArgs, cf_container_query_a
 get_containers_details_result({ok, "204", _, _}) ->
   {ok, []};
 get_containers_details_result({ok, "200", _, ResponseBody}) ->
-  AtomizeKeysFun =
+  BuildRecordFun =
     fun({struct, Proplist}) ->
       #cf_container_details{
         name = proplists:get_value(<<"name">>, Proplist),
@@ -98,8 +97,8 @@ get_containers_details_result({ok, "200", _, ResponseBody}) ->
       }
     end,
     
-  ContainersInfo = lists:map(AtomizeKeysFun,
-                            mochijson2:decode(ResponseBody)), 
+  ContainersInfo = lists:map(BuildRecordFun,
+                             mochijson2:decode(ResponseBody)), 
   {ok, ContainersInfo};
 get_containers_details_result(Other) ->
   cferl_lib:error_result(Other).
@@ -137,7 +136,7 @@ get_container_cdn_details(Name) ->
 
 get_container_cdn_details_result({ok, "204", ResponseHeaders, _}) ->
   {ok, build_cdn_details_proplist(ResponseHeaders)};
-get_container_cdn_details_result(Other) ->
+get_container_cdn_details_result(_Other) ->
   {ok, build_cdn_details_proplist([])}.
 
 build_cdn_details_proplist(Headers) ->

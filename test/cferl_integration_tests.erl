@@ -141,6 +141,10 @@ container_tests(CloudFiles) ->
   % ensure container has no object name
   {ok, []} = RefreshedContainer:get_objects_names(),
   {ok, []} = RefreshedContainer:get_objects_names(#cf_object_query_args{limit=10}),
+
+  % ensure container has no object details
+  {ok, []} = RefreshedContainer:get_objects_details(),
+  {ok, []} = RefreshedContainer:get_objects_details(#cf_object_query_args{limit=10}),
   
   NewObjectName = <<"test.xml">>,
   
@@ -148,7 +152,8 @@ container_tests(CloudFiles) ->
   false = RefreshedContainer:object_exists(NewObjectName),
   
   % TODO create object
-  % TODO test new object with: get_objects_names/0 get_objects_names/1 object_exists/1 
+  % TODO test new object with: get_objects_names/0/1 get_objects_details/0/1 object_exists/1
+  %      match {{Year, Month, Day}, {Hour, Minute, Second, MicroSecond}}
 
   % ensure log retention can be stoped
   ok = RefreshedContainer:set_log_retention(false),

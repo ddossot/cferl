@@ -8,6 +8,7 @@
 %%% @type cferl_error() = {error, not_found} | {error, unauthorized} | {error, {unexpected_response, Other}}.
 %%% @type cf_container_cdn_config = record(). Record of type cf_container_cdn_config.
 %%% @type cf_object_query_args() = record(). Record of type cf_object_query_args.
+%%% @type cf_object_details() = record. Record of type cf_object_details.
 
 -module(cferl_container, [Connection, ContainerName, Bytes, Count, CdnDetails]).
 -author('David Dossot <david@dossot.net>').
@@ -17,7 +18,8 @@
 -export([name/0, bytes/0, count/0, is_empty/0, is_public/0, cdn_url/0, cdn_ttl/0, log_retention/0,
          make_public/0, make_public/1, make_private/0, set_log_retention/1,
          refresh/0, delete/0,
-         get_objects_names/0, get_objects_names/1, object_exists/1]).
+         get_objects_names/0, get_objects_names/1, get_objects_details/0, get_objects_details/1,
+         object_exists/1]).
 
 %% @doc Name of the current container.
 %% @spec name() -> binary()
@@ -153,8 +155,7 @@ delete() ->
 %% @spec get_objects_names() -> {ok, [binary()]} | Error
 %%   Error = cferl_error()
 get_objects_names() ->
-  Result = Connection:send_storage_request(get, Connection:get_container_path(ContainerName), raw),
-  get_objects_names_result(Result).
+  get_objects_names(#cf_object_query_args{}).
 
 %% @doc Retrieve the object names in the current container, filtered by the provided query arguments.
 %%   If you supply the optional limit, marker, prefix or path arguments, the call will return the number of objects specified in limit,
@@ -177,6 +178,58 @@ get_objects_names_result({ok, "200", _, ResponseBody}) ->
 get_objects_names_result(Other) ->
   cferl_lib:error_result(Other).
 
+%% @doc Retrieve details for all the objects in the current container (within the limits imposed by Cloud Files server).
+%% @spec get_objects_details() -> {ok, [cf_object_details()]} | Error
+%%   Error = cferl_error()
+get_objects_details() ->
+  get_objects_details(#cf_object_query_args{}).
+  
+%% @doc Retrieve the object details in the current container, filtered by the provided query arguments.
+%%   If you supply the optional limit, marker, prefix or path arguments, the call will return the number of objects specified in limit,
+%%   starting at the object index specified in marker, selecting objects whose names start with prefix or search within the pseudo-filesystem
+%%   path.
+%% @spec get_objects_details(QueryArgs) -> {ok, [cf_object_details()]} | Error
+%%   QueryArgs = cf_object_query_args()
+%%   Error = cferl_error()
+get_objects_details(QueryArgs) when is_record(QueryArgs, cf_object_query_args) ->
+  QueryString = cferl_lib:object_query_args_to_string(QueryArgs),
+  Result = Connection:send_storage_request(get,
+                                           Connection:get_container_path(ContainerName) ++ QueryString,
+                                           json),
+  get_objects_details_result(Result).
+  
+get_objects_details_result({ok, "204", _, _}) ->
+  {ok, []};
+get_objects_details_result({ok, "200", _, ResponseBody}) ->
+  BuildRecordFun =
+    fun({struct, Proplist}) ->
+      LastModifiedBin = proplists:get_value(<<"last_modified">>, Proplist), 
+      <<Year :4/binary, "-",
+        Month:2/binary, "-",
+        Day  :2/binary, "T",
+        Hour :2/binary, ":",
+        Min  :2/binary, ":",
+        Sec  :2/binary, ".",
+        MSec :6/binary>> = LastModifiedBin,
+        
+      LastModified = {{bin_to_int(Year), bin_to_int(Month), bin_to_int(Day)},
+                      {bin_to_int(Hour), bin_to_int(Min), bin_to_int(Sec), bin_to_int(MSec)}},
+      
+      #cf_object_details{
+        name = proplists:get_value(<<"name">>, Proplist),
+        bytes = proplists:get_value(<<"bytes">>, Proplist),
+        last_modified = LastModified,
+        content_type = proplists:get_value(<<"content_type">>, Proplist),
+        hash = proplists:get_value(<<"hash">>, Proplist)
+      }
+    end,
+    
+  ObjectsInfo = lists:map(BuildRecordFun,
+                          mochijson2:decode(ResponseBody)), 
+  {ok, ObjectsInfo};
+get_objects_details_result(Other) ->
+  cferl_lib:error_result(Other).
+  
 %% @doc Test the existence of an object in the current container.
 %% @spec object_exists(ObjectName::binary()) -> true | false
 object_exists(ObjectName) when is_binary(ObjectName) ->
@@ -192,9 +245,12 @@ object_exists_result({ok, ResponseCode, _, _})
 object_exists_result(_) ->
   false.
 
-%% TODO add: get_objects_details/0 /1 get_object/1 create_object/1 delete_object/1
+%% TODO add: get_object/1 create_object/1 delete_object/1
   
 %% Private functions
 get_object_path(ObjectName) when is_binary(ObjectName) ->
   "/" ++ cferl_lib:url_encode(ObjectName).
+
+bin_to_int(Bin) when is_binary(Bin) ->
+  list_to_integer(binary_to_list(Bin)).
 

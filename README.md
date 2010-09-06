@@ -74,7 +74,8 @@ The following, which is the output when running the integration tests, demonstra
     ContainerBytes=Container:bytes().
     ContainerSize=Container:count().
     ContainerIsEmpty=Container:is_empty().
-    # > Name: <<"cferl-test">> - Bytes: 360 - Size: 1 - IsEmpty: false
+    
+    # -> Name: <<"cferl-test">> - Bytes: 360 - Size: 1 - IsEmpty: false
     
     # Check a container's existence
     false=CloudFiles:container_exists(NewContainerName).
@@ -105,7 +106,7 @@ The following, which is the output when running the integration tests, demonstra
     true=RefreshedContainer:is_public().
     
     io:format("~s~n~n",[RefreshedContainer:cdn_url()]).
-    http://c0024448.cdn1.cloudfiles.rackspacecloud.com
+    http://c0024897.cdn1.cloudfiles.rackspacecloud.com
 
     86400=RefreshedContainer:cdn_ttl().
     true=RefreshedContainer:log_retention().
