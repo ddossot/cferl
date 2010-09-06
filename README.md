@@ -1,7 +1,7 @@
 Rackspace Cloud Files Erlang Client
 ===================================
 
-> Version 0.1 - Currently under initial development!
+> Version 0.9 - Currently under initial development!
 
 Description
 -----------
