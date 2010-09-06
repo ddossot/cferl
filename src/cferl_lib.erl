@@ -12,14 +12,40 @@
 -include("cferl.hrl").
 
 -export([error_result/1,
-         caseless_get_proplist_value/2,
+         get_int_header/2, get_boolean_header/2, get_binary_header/2, get_string_header/2,
          container_query_args_to_string/1, cdn_config_to_headers/1,
          object_query_args_to_string/1,
          url_encode/1]).
 
+-define(TEST_HEADERS, [{"int", "123"}, {"bool", "true"}, {"str", "abc"}]).
+
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
 -endif.
+
+%% @doc Get an integer value from a proplist with a case insentive search on key.
+%%   Return 0 if the key is not found. 
+%% @spec get_int_header(Key::string(), Proplist::list()) -> integer() 
+get_int_header(Name, Headers) when is_list(Headers) ->
+  list_to_int(caseless_get_proplist_value(Name, Headers)).
+
+%% @doc Get a boolean value from a proplist with a case insentive search on key.
+%%   Return false if the key is not found. 
+%% @spec get_int_header(Key::string(), Proplist::list()) -> boolean() 
+get_boolean_header(Name, Headers) when is_list(Headers) ->
+  list_to_boolean(caseless_get_proplist_value(Name, Headers)).
+
+%% @doc Get a binary value from a proplist with a case insentive search on key.
+%%   Return <<>> if the key is not found. 
+%% @spec get_binary_header(Key::string(), Proplist::list()) -> binary() 
+get_binary_header(Name, Headers) when is_list(Headers) ->
+  list_to_bin(caseless_get_proplist_value(Name, Headers)).
+
+%% @doc Get a string value from a proplist with a case insentive search on key.
+%%   Return "" if the key is not found. 
+%% @spec get_string_header(Key::string(), Proplist::list()) -> string() 
+get_string_header(Name, Headers) when is_list(Headers) ->
+  list_to_string(caseless_get_proplist_value(Name, Headers)).
 
 %% @doc Authenticate and open connection.
 %% @spec error_result(HttpResponse) -> Error
@@ -31,12 +57,6 @@ error_result({ok, "401", _, _}) ->
   {error, unauthorized};
 error_result(Other) ->
   {error, {unexpected_response, Other}}.
-
-%% @doc Get a value from a proplist with a case insentive search on key.
-%% @spec caseless_get_proplist_value(Key::string(), Proplist::list()) -> Result::term() | undefined 
-caseless_get_proplist_value(Key, Proplist) when is_list(Key), is_list(Proplist) ->
-  proplists:get_value(string:to_lower(Key),
-                      to_lower_case_keys(Proplist)).
 
 %% @doc Convert a cf_container_query_args record into an URL encoded query string.
 %% @spec container_query_args_to_string(QueryArgs::record()) -> string()
@@ -107,6 +127,31 @@ url_encode(Bin) when is_binary(Bin) ->
   ibrowse_lib:url_encode(binary_to_list(Bin)).
 
 %% Private functions
+
+caseless_get_proplist_value(Key, Proplist) when is_list(Key), is_list(Proplist) ->
+  proplists:get_value(string:to_lower(Key),
+                      to_lower_case_keys(Proplist)).
+
+list_to_int(List) when is_list(List) ->
+  list_to_integer(List);
+list_to_int(_) ->
+  0.
+
+list_to_boolean(List) when is_list(List) ->
+  string:to_lower(List) == "true";
+list_to_boolean(_) ->
+  false.
+
+list_to_bin(List) when is_list(List) ->
+  list_to_binary(List);
+list_to_bin(_) ->
+  <<>>.
+  
+list_to_string(List) when is_list(List) ->
+  List;
+list_to_string(_) ->
+  "".
+
 query_args_to_string("") ->
   "";
 query_args_to_string(QueryString) ->
@@ -122,8 +167,28 @@ filter_undefined(List) when is_list(List) ->
 -ifdef(TEST).
 
 caseless_get_proplist_value_test() ->
-  ?assert(undefined == caseless_get_proplist_value("CcC", [{"AaA", 1}, {"bBb", 2}])),
-  ?assert(2 == caseless_get_proplist_value("bbb", [{"AaA", 1}, {"bBb", 2}])),
+  ?assert(undefined == caseless_get_proplist_value("foo", ?TEST_HEADERS)),
+  ?assert("abc" == caseless_get_proplist_value("STR", ?TEST_HEADERS)),
+  ok.
+  
+get_int_header_test() ->
+  ?assert(0 == get_int_header("foo", ?TEST_HEADERS)),
+  ?assert(123 == get_int_header("INT", ?TEST_HEADERS)),
+  ok.
+  
+get_boolean_header_test() ->
+  ?assert(false == get_boolean_header("foo", ?TEST_HEADERS)),
+  ?assert(true == get_boolean_header("BOOL", ?TEST_HEADERS)),
+  ok.
+  
+get_binary_header_test() ->
+  ?assert(<<>> == get_binary_header("foo", ?TEST_HEADERS)),
+  ?assert(<<"abc">> == get_binary_header("STR", ?TEST_HEADERS)),
+  ok.
+  
+get_string_header_test() ->
+  ?assert("" == get_string_header("foo", ?TEST_HEADERS)),
+  ?assert("abc" == get_string_header("STR", ?TEST_HEADERS)),
   ok.
 
 container_query_args_to_string_test() ->

@@ -154,7 +154,11 @@ container_tests(CloudFiles) ->
   % TODO create object
   % TODO test new object with: get_objects_names/0/1 get_objects_details/0/1 object_exists/1
   %      match {{Year, Month, Day}, {Hour, Minute, Second, MicroSecond}}
-
+  % TODO get object
+  % TODO test Obj:name(), Obj:bytes(), Obj:last_modified(), Obj:content_type(), Obj:etag()
+  % TODO test set and get metadata
+  % TODO delete object
+  
   % ensure log retention can be stoped
   ok = RefreshedContainer:set_log_retention(false),
   

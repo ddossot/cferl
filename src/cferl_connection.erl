@@ -38,9 +38,9 @@ get_account_info_result({ok, "204", ResponseHeaders, _}) ->
   {ok,
     #cf_account_info{ 
       bytes_used = 
-         get_int_header("x-account-bytes-used", ResponseHeaders),
+         cferl_lib:get_int_header("x-account-bytes-used", ResponseHeaders),
       container_count =
-         get_int_header("x-account-container-count", ResponseHeaders)
+         cferl_lib:get_int_header("x-account-container-count", ResponseHeaders)
   }};
 get_account_info_result(Other) ->
   cferl_lib:error_result(Other).
@@ -124,8 +124,8 @@ get_container(Name) when is_binary(Name) ->
 get_container_result(Name, {ok, "204", ResponseHeaders, _}) ->
   ContainerDetails = #cf_container_details{
         name = Name,
-        bytes = get_int_header("x-container-bytes-used", ResponseHeaders),
-        count = get_int_header("x-container-object-count", ResponseHeaders)
+        bytes = cferl_lib:get_int_header("x-container-bytes-used", ResponseHeaders),
+        count = cferl_lib:get_int_header("x-container-object-count", ResponseHeaders)
       },
   {ok, CdnDetails} = get_container_cdn_details(Name),
   {ok, cferl_container:new(THIS, ContainerDetails, get_container_path(Name), CdnDetails)};
@@ -143,12 +143,12 @@ get_container_cdn_details_result(_Other) ->
 
 build_cdn_details_proplist(Headers) ->
   [
-    {cdn_enabled, get_boolean_header("x-cdn-enabled", Headers)},
-    {ttl, get_int_header("x-ttl", Headers)},
-    {cdn_uri, get_binary_header("x-cdn-uri", Headers)},
-    {user_agent_acl, get_binary_header("x-user-agent-acl", Headers)},
-    {referrer_acl, get_binary_header("x-referrer-acl", Headers)},
-    {log_retention, get_boolean_header("x-log-retention", Headers)}
+    {cdn_enabled, cferl_lib:get_boolean_header("x-cdn-enabled", Headers)},
+    {ttl, cferl_lib:get_int_header("x-ttl", Headers)},
+    {cdn_uri, cferl_lib:get_binary_header("x-cdn-uri", Headers)},
+    {user_agent_acl, cferl_lib:get_binary_header("x-user-agent-acl", Headers)},
+    {referrer_acl, cferl_lib:get_binary_header("x-referrer-acl", Headers)},
+    {log_retention, cferl_lib:get_boolean_header("x-log-retention", Headers)}
   ].
   
 %% @doc Create a new container (name must not be already used).
@@ -247,28 +247,4 @@ build_json_query_string(PathAndQuery) when is_list(PathAndQuery) ->
     false -> "?"
   end ++
   "format=json".
-
-get_int_header(Name, Headers) when is_list(Headers) ->
-  list_to_int(cferl_lib:caseless_get_proplist_value(Name, Headers)).
-
-list_to_int(List) when is_list(List) ->
-  list_to_integer(List);
-list_to_int(_) ->
-  0.
-
-get_boolean_header(Name, Headers) when is_list(Headers) ->
-  list_to_boolean(cferl_lib:caseless_get_proplist_value(Name, Headers)).
-
-list_to_boolean(List) when is_list(List) ->
-  string:to_lower(List) == "true";
-list_to_boolean(_) ->
-  false.
-
-get_binary_header(Name, Headers) when is_list(Headers) ->
-  list_to_bin(cferl_lib:caseless_get_proplist_value(Name, Headers)).
-  
-list_to_bin(List) when is_list(List) ->
-  list_to_binary(List);
-list_to_bin(_) ->
-  <<>>.
 

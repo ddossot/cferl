@@ -52,9 +52,9 @@ ensure_started(false) ->
 connect_result({ok, "204", ResponseHeaders, _ResponseBody}) ->
   {ok, Version} = application:get_key(?APPLICATION, vsn),
   {ok, cferl_connection:new(Version,
-                            cferl_lib:caseless_get_proplist_value("x-auth-token", ResponseHeaders),
-                            cferl_lib:caseless_get_proplist_value("x-storage-url", ResponseHeaders),
-                            cferl_lib:caseless_get_proplist_value("x-cdn-management-url", ResponseHeaders))};
+                            cferl_lib:get_string_header("x-auth-token", ResponseHeaders),
+                            cferl_lib:get_string_header("x-storage-url", ResponseHeaders),
+                            cferl_lib:get_string_header("x-cdn-management-url", ResponseHeaders))};
 connect_result(Other) ->
   cferl_lib:error_result(Other).
 

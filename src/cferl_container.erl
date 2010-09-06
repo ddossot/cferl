@@ -19,7 +19,7 @@
          make_public/0, make_public/1, make_private/0, set_log_retention/1,
          refresh/0, delete/0,
          get_objects_names/0, get_objects_names/1, get_objects_details/0, get_objects_details/1,
-         object_exists/1]).
+         object_exists/1, get_object/1]).
 
 %% @doc Name of the current container.
 %% @spec name() -> binary()
@@ -195,17 +195,18 @@ get_objects_details_result({ok, "200", _, ResponseBody}) ->
         Hour :2/binary, ":",
         Min  :2/binary, ":",
         Sec  :2/binary, ".",
-        MSec :6/binary>> = LastModifiedBin,
-        
+        _MSec:6/binary>> = LastModifiedBin,
+      
+      % drop the microseconds, not supported by RFC 1123
       LastModified = {{bin_to_int(Year), bin_to_int(Month), bin_to_int(Day)},
-                      {bin_to_int(Hour), bin_to_int(Min), bin_to_int(Sec), bin_to_int(MSec)}},
+                      {bin_to_int(Hour), bin_to_int(Min), bin_to_int(Sec)}},
       
       #cf_object_details{
         name = proplists:get_value(<<"name">>, Proplist),
         bytes = proplists:get_value(<<"bytes">>, Proplist),
         last_modified = LastModified,
         content_type = proplists:get_value(<<"content_type">>, Proplist),
-        hash = proplists:get_value(<<"hash">>, Proplist)
+        etag = proplists:get_value(<<"hash">>, Proplist)
       }
     end,
     
@@ -218,7 +219,7 @@ get_objects_details_result(Other) ->
 %% @doc Test the existence of an object in the current container.
 %% @spec object_exists(ObjectName::binary()) -> true | false
 object_exists(ObjectName) when is_binary(ObjectName) ->
-  Result = Connection:send_storage_request(head, ContainerPath ++ get_object_path(ObjectName), raw),
+  Result = Connection:send_storage_request(head, get_object_path(ObjectName), raw),
   object_exists_result(Result).
 
 object_exists_result({ok, ResponseCode, _, _})
@@ -227,11 +228,37 @@ object_exists_result({ok, ResponseCode, _, _})
 object_exists_result(_) ->
   false.
 
-%% TODO add: get_object/1 create_object/1 delete_object/1
+%% @doc Get a reference to an existing storage object.
+%% @spec get_object(Name::binary) -> {ok, Object} | Error
+%%   Object = cferl_object()
+%%   Error = cferl_error()
+get_object(ObjectName) ->
+  Result = Connection:send_storage_request(head, get_object_path(ObjectName), raw),
+  get_object_result(ObjectName, Result).
+
+get_object_result(ObjectName, {ok, ResponseCode, ResponseHeaders, _})
+  when ResponseCode =:= "200"; ResponseCode =:= "204" ->
   
+  ObjectDetails = #cf_object_details{
+    name = ObjectName,
+    bytes = cferl_lib:get_int_header("Content-Length", ResponseHeaders),
+    last_modified = httpd_util:convert_request_date(cferl_lib:get_string_header("Last-Modified", ResponseHeaders)),
+    content_type = cferl_lib:get_binary_header("Content-Type", ResponseHeaders),
+    etag = cferl_lib:get_binary_header("Etag", ResponseHeaders)
+  },
+  
+  % TODO implement metadata extraction
+  MetaData = [],
+  
+  {ok, cferl_object:new(Connection, ObjectDetails, get_object_path(ObjectName), MetaData)};
+get_object_result(_, Other) ->
+  cferl_lib:error_result(Other).
+
+%% TODO add: create_object/1 delete_object/1
+
 %% Private functions
 get_object_path(ObjectName) when is_binary(ObjectName) ->
-  "/" ++ cferl_lib:url_encode(ObjectName).
+  ContainerPath ++ "/" ++ cferl_lib:url_encode(ObjectName).
 
 bin_to_int(Bin) when is_binary(Bin) ->
   list_to_integer(binary_to_list(Bin)).
