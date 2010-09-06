@@ -9,7 +9,7 @@
 %%% @type cf_container_cdn_config = record(). Record of type cf_container_cdn_config.
 %%% @type cf_object_query_args() = record(). Record of type cf_object_query_args.
 
--module(cferl_container, [Connection, Name, Bytes, Count, CdnDetails]).
+-module(cferl_container, [Connection, ContainerName, Bytes, Count, CdnDetails]).
 -author('David Dossot <david@dossot.net>').
 -include("cferl.hrl").
 
@@ -17,12 +17,12 @@
 -export([name/0, bytes/0, count/0, is_empty/0, is_public/0, cdn_url/0, cdn_ttl/0, log_retention/0,
          make_public/0, make_public/1, make_private/0, set_log_retention/1,
          refresh/0, delete/0,
-         get_objects_names/0, get_objects_names/1]).
+         get_objects_names/0, get_objects_names/1, object_exists/1]).
 
 %% @doc Name of the current container.
 %% @spec name() -> binary()
 name() ->
-  Name.
+  ContainerName.
 
 %% @doc Size in bytes of the current container.
 %% @spec bytes() -> integer()
@@ -73,7 +73,7 @@ make_public() ->
 %%   Error = cferl_error()
 make_public(CdnConfig) when is_record(CdnConfig, cf_container_cdn_config) ->
   PutResult = Connection:send_cdn_management_request(put,
-                                                     Connection:get_container_path(Name),
+                                                     Connection:get_container_path(ContainerName),
                                                      raw),
   make_public_put_result(CdnConfig, PutResult).
 
@@ -83,7 +83,7 @@ make_public_put_result(CdnConfig, {ok, ResponseCode, _, _})
   CdnConfigHeaders = cferl_lib:cdn_config_to_headers(CdnConfig),
   Headers = [{"X-CDN-Enabled", "True"} | CdnConfigHeaders],
   PostResult = Connection:send_cdn_management_request(post,
-                                                      Connection:get_container_path(Name),
+                                                      Connection:get_container_path(ContainerName),
                                                       Headers,
                                                       raw),
   make_public_post_result(PostResult);
@@ -103,7 +103,7 @@ make_public_post_result(Other) ->
 make_private() ->
   Headers = [{"X-CDN-Enabled", "False"}],
   PostResult = Connection:send_cdn_management_request(post,
-                                                      Connection:get_container_path(Name),
+                                                      Connection:get_container_path(ContainerName),
                                                       Headers,
                                                       raw),
   make_private_result(PostResult).
@@ -125,7 +125,7 @@ set_log_retention(false) ->
 do_set_log_retention(State) ->
   Headers = [{"x-log-retention", State}],
   PostResult = Connection:send_cdn_management_request(post,
-                                                      Connection:get_container_path(Name),
+                                                      Connection:get_container_path(ContainerName),
                                                       Headers,
                                                       raw),
   set_log_retention_result(PostResult).
@@ -141,19 +141,19 @@ set_log_retention_result(Other) ->
 %%   Container = cferl_container()
 %%   Error = cferl_error()
 refresh() ->
-  Connection:get_container(Name).
+  Connection:get_container(ContainerName).
 
 %% @doc Delete the current container (which must be empty).
 %% @spec delete() -> ok | Error
 %%   Error = {error, not_empty} | cferl_error()
 delete() ->
-  Connection:delete_container(Name).
+  Connection:delete_container(ContainerName).
 
 %% @doc Retrieve all the object names in the current container (within the limits imposed by Cloud Files server).
 %% @spec get_objects_names() -> {ok, [binary()]} | Error
 %%   Error = cferl_error()
 get_objects_names() ->
-  Result = Connection:send_storage_request(get, Connection:get_container_path(Name), raw),
+  Result = Connection:send_storage_request(get, Connection:get_container_path(ContainerName), raw),
   get_objects_names_result(Result).
 
 %% @doc Retrieve the object names in the current container, filtered by the provided query arguments.
@@ -166,16 +166,35 @@ get_objects_names() ->
 get_objects_names(QueryArgs) when is_record(QueryArgs, cf_object_query_args) ->
   QueryString = cferl_lib:object_query_args_to_string(QueryArgs),
   Result = Connection:send_storage_request(get,
-                                           Connection:get_container_path(Name) ++ QueryString,
+                                           Connection:get_container_path(ContainerName) ++ QueryString,
                                            raw),
   get_objects_names_result(Result).
 
 get_objects_names_result({ok, "204", _, _}) ->
   {ok, []};
 get_objects_names_result({ok, "200", _, ResponseBody}) ->
-  {ok, [list_to_binary(Name) || Name <- string:tokens(ResponseBody, "\n")]};
+  {ok, [list_to_binary(ObjectName) || ObjectName <- string:tokens(ResponseBody, "\n")]};
 get_objects_names_result(Other) ->
   cferl_lib:error_result(Other).
 
-%% TODO add: get_objects_details/0 /1 object_exists/1 create_object/1 delete_object/1
+%% @doc Test the existence of an object in the current container.
+%% @spec object_exists(ObjectName::binary()) -> true | false
+object_exists(ObjectName) when is_binary(ObjectName) ->
+  Result = Connection:send_storage_request(head,
+                                           Connection:get_container_path(ContainerName)
+                                             ++ get_object_path(ObjectName),
+                                           raw),
+  object_exists_result(Result).
+
+object_exists_result({ok, ResponseCode, _, _})
+  when ResponseCode =:= "200"; ResponseCode =:= "204" ->
+  true;
+object_exists_result(_) ->
+  false.
+
+%% TODO add: get_objects_details/0 /1 get_object/1 create_object/1 delete_object/1
+  
+%% Private functions
+get_object_path(ObjectName) when is_binary(ObjectName) ->
+  "/" ++ cferl_lib:url_encode(ObjectName).
 

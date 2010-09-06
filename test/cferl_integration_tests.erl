@@ -87,7 +87,7 @@ container_tests(CloudFiles) ->
   ?PRINT_CODE("# Get a container reference by name"),
   ?PRINT_CALL({ok, Container} = CloudFiles:get_container(Detail#cf_container_details.name)),
   ?PRINT_CODE(""),
-
+  
   ?PRINT_CODE("# Get container details from its reference"),
   ?PRINT_CALL(ContainerName = Container:name()),
   ?PRINT_CALL(ContainerBytes = Container:bytes()),
@@ -142,8 +142,13 @@ container_tests(CloudFiles) ->
   {ok, []} = RefreshedContainer:get_objects_names(),
   {ok, []} = RefreshedContainer:get_objects_names(#cf_object_query_args{limit=10}),
   
+  NewObjectName = <<"test.xml">>,
+  
+  % ensure new object doesn't exist
+  false = RefreshedContainer:object_exists(NewObjectName),
+  
   % TODO create object
-  % TODO test get_objects_names/0 and get_objects_names/1
+  % TODO test new object with: get_objects_names/0 get_objects_names/1 object_exists/1 
 
   % ensure log retention can be stoped
   ok = RefreshedContainer:set_log_retention(false),
