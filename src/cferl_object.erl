@@ -5,8 +5,10 @@
 %%% See LICENSE for license information.
 %%% Copyright (c) 2010 David Dossot
 %%%
+%%% @type cferl_error() = {error, not_found} | {error, unauthorized} | {error, {unexpected_response, Other}}.
+%%% @type cferl_object() = term(). Reference to the cferl_object parameterized module.
 
--module(cferl_object, [Connection, ObjectDetails, ObjectPath, MetaData]).
+-module(cferl_object, [Connection, Container, ObjectDetails, ObjectPath, MetaData]).
 -author('David Dossot <david@dossot.net>').
 -include("cferl.hrl").
 
@@ -36,5 +38,12 @@ content_type() ->
 %% @spec etag() -> binary()
 etag() ->
   ObjectDetails#cf_object_details.etag.
+  
+%% @doc Refresh the current object reference.
+%% @spec refresh() -> {ok, Object} | Error
+%%   Object = cferl_object()
+%%   Error = cferl_error()
+refresh() ->
+  Container:get_object(name()).
 
 % TODO add: metadata (get/set), data (get/set), data_stream (get/set) delete

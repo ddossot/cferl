@@ -9,6 +9,7 @@
 %%% @type cf_container_cdn_config = record(). Record of type cf_container_cdn_config.
 %%% @type cf_object_query_args() = record(). Record of type cf_object_query_args.
 %%% @type cf_object_details() = record. Record of type cf_object_details.
+%%% @type cferl_object() = term(). Reference to the cferl_object parameterized module.
 
 -module(cferl_container, [Connection, ContainerDetails, ContainerPath, CdnDetails]).
 -author('David Dossot <david@dossot.net>').
@@ -250,7 +251,7 @@ get_object_result(ObjectName, {ok, ResponseCode, ResponseHeaders, _})
   % TODO implement metadata extraction
   MetaData = [],
   
-  {ok, cferl_object:new(Connection, ObjectDetails, get_object_path(ObjectName), MetaData)};
+  {ok, cferl_object:new(Connection, THIS, ObjectDetails, get_object_path(ObjectName), MetaData)};
 get_object_result(_, Other) ->
   cferl_lib:error_result(Other).
 
