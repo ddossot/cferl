@@ -156,9 +156,11 @@ container_tests(CloudFiles) ->
   %      match {{Year, Month, Day}, {Hour, Minute, Second, MicroSecond}}
   % TODO get object
   % TODO test Obj:name(), Obj:bytes(), Obj:last_modified(), Obj:content_type(), Obj:etag()
-  % TODO test set metadata and data
+  % TODO test set metadata
   % TODO test refresh
-  % TODO test get metadata and data
+  % TODO test get metadata
+  % TEST test write then read data
+  % TEST test write then read data_stream
   % TODO delete object
   
   % ensure log retention can be stoped

@@ -248,10 +248,7 @@ get_object_result(ObjectName, {ok, ResponseCode, ResponseHeaders, _})
     etag = cferl_lib:get_binary_header("Etag", ResponseHeaders)
   },
   
-  % TODO implement metadata extraction
-  MetaData = [],
-  
-  {ok, cferl_object:new(Connection, THIS, ObjectDetails, get_object_path(ObjectName), MetaData)};
+  {ok, cferl_object:new(Connection, THIS, ObjectDetails, get_object_path(ObjectName), ResponseHeaders)};
 get_object_result(_, Other) ->
   cferl_lib:error_result(Other).
 

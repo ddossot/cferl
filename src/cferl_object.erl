@@ -8,11 +8,12 @@
 %%% @type cferl_error() = {error, not_found} | {error, unauthorized} | {error, {unexpected_response, Other}}.
 %%% @type cferl_object() = term(). Reference to the cferl_object parameterized module.
 
--module(cferl_object, [Connection, Container, ObjectDetails, ObjectPath, MetaData]).
+-module(cferl_object, [Connection, Container, ObjectDetails, ObjectPath, HttpHeaders]).
 -author('David Dossot <david@dossot.net>').
 -include("cferl.hrl").
 
--export([name/0, bytes/0, last_modified/0, content_type/0, etag/0]).
+-export([name/0, bytes/0, last_modified/0, content_type/0, etag/0, metadata/0,
+         set_metadata/1, refresh/0]).
 
 %% @doc Name of the current object.
 %% @spec name() -> binary()
@@ -38,12 +39,32 @@ content_type() ->
 %% @spec etag() -> binary()
 etag() ->
   ObjectDetails#cf_object_details.etag.
-  
-%% @doc Refresh the current object reference.
+
+%% @doc Meta-data of the current object.
+%%   The "X-Meta-Object-" prefix is stripped off the underlying HTTP header name. 
+%% @spec metadata() -> [{Key::binary(),Value::binary()}]
+metadata() ->
+  cferl_lib:extract_object_meta_headers(HttpHeaders).
+
+%% @doc Set meta-data for the current object. All pre-existing meta-data is replaced by the new one.
+%%   The "X-Meta-Object-" prefix will be automatically prepended to form the HTTP header names.
+%% @spec set_metadata([{Key::binary(),Value::binary()}]) -> ok | Error
+%%   Error = cferl_error()
+set_metadata(MetaData) ->
+  MetaHttpHeaders = [{?OBJECT_META_HEADER_PREFIX ++ binary_to_list(Key), binary_to_list(Value)} || {Key, Value} <- MetaData],
+  Result = Connection:send_storage_request(post, ObjectPath, MetaHttpHeaders, raw),
+  set_metadata_result(Result).
+
+set_metadata_result({ok, "202", _, _}) ->
+  ok;
+set_metadata_result(Other) ->
+  cferl_lib:error_result(Other).
+
+%% @doc Refresh the current object reference, including all the meta information.
 %% @spec refresh() -> {ok, Object} | Error
 %%   Object = cferl_object()
 %%   Error = cferl_error()
 refresh() ->
   Container:get_object(name()).
 
-% TODO add: metadata (get/set), data (get/set), data_stream (get/set) delete
+% TODO add: data/data_stream (read/write), delete

@@ -23,7 +23,7 @@
          get_public_containers_names/1]).
 
 %% Exposed for internal usage
--export([send_storage_request/3,
+-export([send_storage_request/3, send_storage_request/4,
          send_cdn_management_request/3, send_cdn_management_request/4]).
 
 %% @doc Retrieve the account information.
@@ -201,7 +201,11 @@ get_public_containers_names_result(Other) ->
 %% @hidden
 send_storage_request(Method, PathAndQuery, Accept)
   when is_atom(Method), is_atom(Accept) ->
-    send_request(StorageUrl, Method, PathAndQuery, [], Accept).
+    send_storage_request(Method, PathAndQuery, [], Accept).
+
+send_storage_request(Method, PathAndQuery, Headers, Accept)
+  when is_atom(Method), is_list(Headers), is_atom(Accept) ->
+    send_request(StorageUrl, Method, PathAndQuery, Headers, Accept).
 
 %% @hidden
 send_cdn_management_request(Method, PathAndQuery, Accept)

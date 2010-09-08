@@ -15,13 +15,24 @@
          get_int_header/2, get_boolean_header/2, get_binary_header/2, get_string_header/2,
          container_query_args_to_string/1, cdn_config_to_headers/1,
          object_query_args_to_string/1,
-         url_encode/1]).
+         url_encode/1, extract_object_meta_headers/1]).
 
 -define(TEST_HEADERS, [{"int", "123"}, {"bool", "true"}, {"str", "abc"}]).
 
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
 -endif.
+
+%% @doc Authenticate and open connection.
+%% @spec error_result(HttpResponse) -> Error
+%%   HttpResponse = tuple()
+%%   Error = cferl_error()
+error_result({ok, "404", _, _}) ->
+  {error, not_found};
+error_result({ok, "401", _, _}) ->
+  {error, unauthorized};
+error_result(Other) ->
+  {error, {unexpected_response, Other}}.
 
 %% @doc Get an integer value from a proplist with a case insentive search on key.
 %%   Return 0 if the key is not found. 
@@ -46,17 +57,6 @@ get_binary_header(Name, Headers) when is_list(Headers) ->
 %% @spec get_string_header(Key::string(), Proplist::list()) -> string() 
 get_string_header(Name, Headers) when is_list(Headers) ->
   list_to_string(caseless_get_proplist_value(Name, Headers)).
-
-%% @doc Authenticate and open connection.
-%% @spec error_result(HttpResponse) -> Error
-%%   HttpResponse = tuple()
-%%   Error = cferl_error()
-error_result({ok, "404", _, _}) ->
-  {error, not_found};
-error_result({ok, "401", _, _}) ->
-  {error, unauthorized};
-error_result(Other) ->
-  {error, {unexpected_response, Other}}.
 
 %% @doc Convert a cf_container_query_args record into an URL encoded query string.
 %% @spec container_query_args_to_string(QueryArgs::record()) -> string()
@@ -121,10 +121,22 @@ object_query_args_to_string(#cf_object_query_args{marker=Marker, limit=Limit, pr
     
   query_args_to_string(string:join(filter_undefined(QueryElements), "&")).
 
-%% @doc Encodes a binary URL element into a string.
+%% @doc Encode a binary URL element into a string.
 %% @spec url_encode(Bin::binary()) -> string().
 url_encode(Bin) when is_binary(Bin) ->
   ibrowse_lib:url_encode(binary_to_list(Bin)).
+
+%% @doc Extract the HTTP headers that are object metadata, remove their prefix and turn them into binary.
+%% @spec extract_object_meta_headers(HttpHeaders::proplist()) -> [{Key::binary(),Value::binary()}].
+extract_object_meta_headers(HttpHeaders) when is_list(HttpHeaders) ->
+  {ok, Re} = re:compile("^" ++ ?OBJECT_META_HEADER_PREFIX, [caseless]),
+  
+  MetaHeaders =
+    lists:filter(fun({Key, _}) ->
+                   re:run(Key, Re) =/= nomatch
+                 end,
+                 HttpHeaders),
+  [{re:replace(Key, Re, <<>>, [{return, binary}]), list_to_binary(Value)} || {Key, Value} <- MetaHeaders].
 
 %% Private functions
 
@@ -222,4 +234,26 @@ object_query_args_to_string_test() ->
   ?assert("" == object_query_args_to_string(#cf_object_query_args{path=true})),
   ok.
 
+extract_object_meta_headers_test() ->
+  TestHeaders = [
+    {"Date", "Thu, 07 Jun 2007 20:59:39 GMT"},
+    {"Server", "Apache"},
+    {"Last-Modified", "Fri, 12 Jun 2007 13:40:18 GMT"},
+    {"ETag", "8a964ee2a5e88be344f36c22562a6486"},
+    {"Content-Length", "512000"},
+    {"Content-Type", "text/plain; charset=UTF-8"},
+    {"X-Object-Meta-Meat", "Bacon"},
+    {"x-object-meta-fruit", "Orange"},
+    {"X-Object-Meta-Veggie", "Turnip"},
+    {"x-object-meta-fruit", "Cream"}],
+  
+  ExpectedMetas = [
+    {<<"Meat">>, <<"Bacon">>},
+    {<<"fruit">>, <<"Orange">>},
+    {<<"Veggie">>, <<"Turnip">>},
+    {<<"fruit">>, <<"Cream">>}],
+    
+  ?assert(ExpectedMetas == extract_object_meta_headers(TestHeaders)),
+  ok.
+  
 -endif.
