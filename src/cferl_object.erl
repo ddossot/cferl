@@ -12,8 +12,10 @@
 -author('David Dossot <david@dossot.net>').
 -include("cferl.hrl").
 
--export([name/0, bytes/0, last_modified/0, content_type/0, etag/0, metadata/0,
-         set_metadata/1, refresh/0]).
+-export([name/0, bytes/0, last_modified/0, content_type/0, etag/0,
+         metadata/0, set_metadata/1, refresh/0,
+         read_data/0, write_data/2, write_data/3,
+         delete/0]).
 
 %% @doc Name of the current object.
 %% @spec name() -> binary()
@@ -67,4 +69,51 @@ set_metadata_result(Other) ->
 refresh() ->
   Container:get_object(name()).
 
-% TODO add: data/data_stream (read/write), delete
+%% TODO add: read_data(size/offset)
+
+%% @doc Read the data stored for the current object.
+%% @spec read_data() -> {ok, Data::binary()} | Error
+%%   Error = cferl_error()
+read_data() ->
+  RequestHeaders = [], % TODO Range: bytes={size}-{offset+size-1}
+  Result = Connection:send_storage_request(get, ObjectPath, RequestHeaders, raw),
+  read_data_result(Result).
+  
+read_data_result({ok, "200", _, ResponseBody}) ->
+  {ok, list_to_binary(ResponseBody)};
+read_data_result(Other) ->
+  cferl_lib:error_result(Other).
+
+%% @doc Write data for the current object.
+%% @spec write_data(Data::binary(), ContentType::binary()) -> ok | Error
+%%   Error = {error, invalid_content_length} | {error, mismatched_etag} | cferl_error()
+write_data(Data, ContentType) when is_binary(Data), is_binary(ContentType) ->
+  write_data(Data, ContentType, []).
+
+%% @doc Write data for the current object.
+%% @spec write_data(Data::binary(), ContentType::binary(), RequestHeaders) -> ok | Error
+%%   Error = {error, invalid_content_length} | {error, mismatched_etag} | cferl_error()
+%%   RequestHeaders = [{Name::binary(), Value::binary()}].
+write_data(Data, ContentType, RequestHeaders)
+  when is_binary(Data), is_binary(ContentType), is_list(RequestHeaders) ->
+  
+  Result = Connection:send_storage_request(put, ObjectPath, RequestHeaders, Data, raw),
+  write_data_result(Result).
+
+write_data_result({ok, "201", _, _}) ->
+  ok;
+write_data_result({ok, "412", _, _}) ->
+  {error, invalid_content_length};
+write_data_result({ok, "422", _, _}) ->
+  {error, mismatched_etag};
+write_data_result(Other) ->
+  cferl_lib:error_result(Other).
+
+% TODO add: read_data_stream read_data_stream(size/offset) write_data_stream
+
+%% @doc Delete the current storage object.
+%% @spec delete() -> ok | Error
+%%   Error = cferl_error()
+delete() ->
+  Container:delete(name()).
+

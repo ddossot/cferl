@@ -18,5 +18,5 @@
 -record(cf_container_cdn_config, {ttl = 86400, user_agent_acl, referrer_acl}).
 
 -record(cf_object_query_args, {marker, limit, prefix, path}).
--record(cf_object_details, {name, bytes, last_modified, content_type, etag}).
+-record(cf_object_details, {name, bytes = 0, last_modified, content_type, etag}).
 

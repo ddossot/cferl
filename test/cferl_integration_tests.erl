@@ -163,6 +163,8 @@ container_tests(CloudFiles) ->
   % TEST test write then read data_stream
   % TODO delete object
   
+  % TODO test make dir
+  
   % ensure log retention can be stoped
   ok = RefreshedContainer:set_log_retention(false),
   

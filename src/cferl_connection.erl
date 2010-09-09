@@ -23,7 +23,7 @@
          get_public_containers_names/1]).
 
 %% Exposed for internal usage
--export([send_storage_request/3, send_storage_request/4,
+-export([send_storage_request/3, send_storage_request/4, send_storage_request/5,
          send_cdn_management_request/3, send_cdn_management_request/4]).
 
 %% @doc Retrieve the account information.
@@ -205,44 +205,50 @@ send_storage_request(Method, PathAndQuery, Accept)
 
 send_storage_request(Method, PathAndQuery, Headers, Accept)
   when is_atom(Method), is_list(Headers), is_atom(Accept) ->
-    send_request(StorageUrl, Method, PathAndQuery, Headers, Accept).
+    send_request(StorageUrl, Method, PathAndQuery, Headers, <<>>, Accept).
+
+send_storage_request(Method, PathAndQuery, Headers, Body, Accept)
+  when is_atom(Method), is_list(Headers), is_binary(Body), is_atom(Accept) ->
+    send_request(StorageUrl, Method, PathAndQuery, Headers, Body, Accept).
 
 %% @hidden
 send_cdn_management_request(Method, PathAndQuery, Accept)
   when is_atom(Method), is_atom(Accept) ->
-    send_request(CdnManagementUrl, Method, PathAndQuery, [], Accept).
+    send_request(CdnManagementUrl, Method, PathAndQuery, [], <<>>, Accept).
 
 %% @hidden
 send_cdn_management_request(Method, PathAndQuery, Headers, Accept)
   when is_atom(Method), is_list(Headers), is_atom(Accept) ->
-    send_request(CdnManagementUrl, Method, PathAndQuery, Headers, Accept).
+    send_request(CdnManagementUrl, Method, PathAndQuery, Headers, <<>>, Accept).
 
 %% @hidden
 get_container_path(Name) when is_binary(Name) ->
   "/" ++ cferl_lib:url_encode(Name).
   
 %% Private functions
-send_request(BaseUrl, Method, PathAndQuery, Headers, Accept)
-  when is_atom(Method), is_binary(PathAndQuery), is_list(Headers), is_atom(Accept) ->
-    send_request(BaseUrl, Method, binary_to_list(PathAndQuery), Headers, Accept);
+send_request(BaseUrl, Method, PathAndQuery, Headers, Body, Accept)
+  when is_atom(Method), is_binary(PathAndQuery), is_list(Headers), is_binary(Body), is_atom(Accept) ->
+    send_request(BaseUrl, Method, binary_to_list(PathAndQuery), Headers, Body, Accept);
     
-send_request(BaseUrl, Method, PathAndQuery, Headers, raw)
-  when is_atom(Method), is_list(PathAndQuery), is_list(Headers) ->
-    send_request(BaseUrl, PathAndQuery, Headers, Method);
+send_request(BaseUrl, Method, PathAndQuery, Headers, Body, raw)
+  when is_atom(Method), is_list(PathAndQuery), is_list(Headers), is_binary(Body) ->
+    do_send_request(BaseUrl, Method, PathAndQuery, Headers, Body);
     
-send_request(BaseUrl, Method, PathAndQuery, Headers, json)
-  when is_atom(Method), is_list(PathAndQuery), is_list(Headers) ->
-    send_request(BaseUrl,
-                 build_json_query_string(PathAndQuery),
-                 Headers,
-                 Method).
+send_request(BaseUrl, Method, PathAndQuery, Headers, Body, json)
+  when is_atom(Method), is_list(PathAndQuery), is_list(Headers), is_binary(Body) ->
+    do_send_request(BaseUrl,
+                    Method,
+                    build_json_query_string(PathAndQuery),
+                    Headers,
+                    Body).
   
-send_request(BaseUrl, PathAndQuery, Headers, Method)
-  when is_list(BaseUrl), is_list(PathAndQuery), is_list(Headers), is_atom(Method) ->
+do_send_request(BaseUrl, Method, PathAndQuery, Headers, Body)
+  when is_list(BaseUrl), is_list(PathAndQuery), is_list(Headers), is_atom(Method), is_binary(Body) ->
     ibrowse:send_req(BaseUrl ++ PathAndQuery,
                      [{"User-Agent", "cferl (CloudFiles Erlang API) v" ++ Version},
                       {"X-Auth-Token", AuthToken} | Headers],
-                      Method).
+                      Method,
+                      Body).
 
 build_json_query_string(PathAndQuery) when is_list(PathAndQuery) ->
   PathAndQuery ++

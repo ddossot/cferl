@@ -20,7 +20,7 @@
          make_public/0, make_public/1, make_private/0, set_log_retention/1,
          refresh/0, delete/0,
          get_objects_names/0, get_objects_names/1, get_objects_details/0, get_objects_details/1,
-         object_exists/1, get_object/1]).
+         object_exists/1, get_object/1, create_object/1, delete_object/1]).
 
 %% @doc Name of the current container.
 %% @spec name() -> binary()
@@ -233,7 +233,7 @@ object_exists_result(_) ->
 %% @spec get_object(Name::binary) -> {ok, Object} | Error
 %%   Object = cferl_object()
 %%   Error = cferl_error()
-get_object(ObjectName) ->
+get_object(ObjectName) when is_binary(ObjectName) ->
   Result = Connection:send_storage_request(head, get_object_path(ObjectName), raw),
   get_object_result(ObjectName, Result).
 
@@ -252,7 +252,35 @@ get_object_result(ObjectName, {ok, ResponseCode, ResponseHeaders, _})
 get_object_result(_, Other) ->
   cferl_lib:error_result(Other).
 
-%% TODO add: create_object/1 delete_object/1
+%% @doc Create a reference to a new storage object.
+%%   Nothing is actually created until data gets written in the object.
+%%   If an object with the provided name already exists, a reference to this object is returned.
+%% @spec delete_object(Name::binary) -> {ok, Object} | Error
+%%   Object = cferl_object()
+%%   Error = cferl_error()
+create_object(ObjectName) when is_binary(ObjectName) ->
+  case get_object(ObjectName) of
+    {ok, Object} ->
+      Object;
+    
+    _ ->
+      ObjectDetails = #cf_object_details{name = ObjectName},
+      {ok, cferl_object:new(Connection, THIS, ObjectDetails, get_object_path(ObjectName), [])}
+  end.
+
+%% @doc Delete an existing storage object.
+%% @spec delete_object(Name::binary) -> ok | Error
+%%   Error = cferl_error()
+delete_object(ObjectName) when is_binary(ObjectName) ->
+  Result = Connection:send_storage_request(delete, get_object_path(ObjectName), raw),
+  delete_object_result(Result).
+
+delete_object_result({ok, "204", _, _}) ->
+  ok;
+delete_object_result(Other) ->
+  cferl_lib:error_result(Other).
+  
+%% TODO add: ensure_dir/1
 
 %% Private functions
 get_object_path(ObjectName) when is_binary(ObjectName) ->
