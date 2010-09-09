@@ -53,7 +53,7 @@ metadata() ->
 %% @spec set_metadata([{Key::binary(),Value::binary()}]) -> ok | Error
 %%   Error = cferl_error()
 set_metadata(MetaData) ->
-  MetaHttpHeaders = [{?OBJECT_META_HEADER_PREFIX ++ binary_to_list(Key), binary_to_list(Value)} || {Key, Value} <- MetaData],
+  MetaHttpHeaders = [{<<?OBJECT_META_HEADER_PREFIX, Key/binary>>, Value} || {Key, Value} <- MetaData],
   Result = Connection:send_storage_request(post, ObjectPath, MetaHttpHeaders, raw),
   set_metadata_result(Result).
 
@@ -97,7 +97,11 @@ write_data(Data, ContentType) when is_binary(Data), is_binary(ContentType) ->
 write_data(Data, ContentType, RequestHeaders)
   when is_binary(Data), is_binary(ContentType), is_list(RequestHeaders) ->
   
-  Result = Connection:send_storage_request(put, ObjectPath, RequestHeaders, Data, raw),
+  Result = Connection:send_storage_request(put,
+                                           ObjectPath,
+                                           [{"Content-Type", ContentType}|RequestHeaders],
+                                           Data,
+                                           raw),
   write_data_result(Result).
 
 write_data_result({ok, "201", _, _}) ->
@@ -115,5 +119,5 @@ write_data_result(Other) ->
 %% @spec delete() -> ok | Error
 %%   Error = cferl_error()
 delete() ->
-  Container:delete(name()).
+  Container:delete_object(name()).
 

@@ -42,7 +42,7 @@ The following, which is the output when running the integration tests, demonstra
     
     # Retrieve the account information record
     {ok,Info}=CloudFiles:get_account_info().
-    Info = #cf_account_info{bytes_used=360, container_count=1}
+    Info = #cf_account_info{bytes_used=360, container_count=2}
     
     # Retrieve names of all existing containers (within the limits imposed by Cloud Files server)
     {ok,Names}=CloudFiles:get_containers_names().
@@ -60,14 +60,14 @@ The following, which is the output when running the integration tests, demonstra
     {ok,ContainersDetails}=CloudFiles:get_containers_details().
     
     # ContainersDetails is a list of #cf_container_details records
-    [Detail|_]=ContainersDetails.
-    Detail = #cf_container_details{name=<<"cferl-test">>, bytes=360, count=1}
+    [ContainerDetails|_]=ContainersDetails.
+    ContainerDetails = #cf_container_details{name=<<"cferl-test">>, bytes=360, count=1}
     
     # Retrieve details for a maximum of 5 containers whose names start at cf
     {ok,CfContainersDetails}=CloudFiles:get_containers_details(#cf_container_query_args{marker=<<"cf">>,limit=5}).
     
     # Get a container reference by name
-    {ok,Container}=CloudFiles:get_container(Detail#cf_container_details.name).
+    {ok,Container}=CloudFiles:get_container(ContainerDetails#cf_container_details.name).
     
     # Get container details from its reference
     ContainerName=Container:name().
@@ -106,10 +106,52 @@ The following, which is the output when running the integration tests, demonstra
     true=RefreshedContainer:is_public().
     
     io:format("~s~n~n",[RefreshedContainer:cdn_url()]).
-    http://c0024897.cdn1.cloudfiles.rackspacecloud.com
+    http://c0025135.cdn1.cloudfiles.rackspacecloud.com
 
     86400=RefreshedContainer:cdn_ttl().
     true=RefreshedContainer:log_retention().
+    
+    ObjectName=<<"test.xml">>.
+    # Create an object *reference*, nothing is sent to the server yet
+    {ok,Object}=RefreshedContainer:create_object(ObjectName).
+    # As expected, it doesn't exist yet
+    false=RefreshedContainer:object_exists(ObjectName).
+    
+    # Write data in the object, which creates it on the server
+    ok=Object:write_data(<<"<test/>">>,<<"application/xml">>).
+    # Now it exists!
+    true=RefreshedContainer:object_exists(ObjectName).
+    
+    # Set custom meta-data on it
+    ok=Object:set_metadata([{<<"Key123">>,<<"my123Value">>}]).
+    
+    # An existing object can be accessed directly from its container
+    {ok,GotObject}=RefreshedContainer:get_object(ObjectName).
+    
+    # Object names and details can be queried
+    {ok,[ObjectName]}=RefreshedContainer:get_objects_names().
+    {ok,[ObjectName]}=RefreshedContainer:get_objects_names(#cf_object_query_args{limit=1}).
+    {ok,[ObjectDetails]}=RefreshedContainer:get_objects_details().
+    ObjectDetails = #cf_object_details{name=<<"test.xml">>, bytes=8, last_modified={{2010,9,9},{5,15,33}}, content_type=application/xml, etag=4366c359d1a7b9b248fa262775613699}
+    
+    # Read the data back
+    {ok,<<"<test/>">>}=Object:read_data().
+    
+    # Refresh the object so its attributes and metadata are up to date
+    {ok,RefreshedObject}=Object:refresh().
+    
+    # Get object attributes
+    ObjectName=RefreshedObject:name().
+    8=RefreshedObject:bytes().
+    {{D,M,Y},{H,Mi,S}}=RefreshedObject:last_modified().
+    <<"application/xml;charset=UTF-8">>=RefreshedObject:content_type().
+    Etag=RefreshedObject:etag().
+    
+    # Get custom meta-data
+    [{<<"Key123">>,<<"my123Value">>}]=RefreshedObject:metadata().
+    
+    # Delete the object
+    ok=RefreshedObject:delete().
     
     # Make the container private
     ok=RefreshedContainer:make_private().

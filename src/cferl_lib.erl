@@ -15,7 +15,7 @@
          get_int_header/2, get_boolean_header/2, get_binary_header/2, get_string_header/2,
          container_query_args_to_string/1, cdn_config_to_headers/1,
          object_query_args_to_string/1,
-         url_encode/1, extract_object_meta_headers/1]).
+         url_encode/1, extract_object_meta_headers/1, binary_headers_to_string/1]).
 
 -define(TEST_HEADERS, [{"int", "123"}, {"bool", "true"}, {"str", "abc"}]).
 
@@ -138,6 +138,16 @@ extract_object_meta_headers(HttpHeaders) when is_list(HttpHeaders) ->
                  HttpHeaders),
   [{re:replace(Key, Re, <<>>, [{return, binary}]), list_to_binary(Value)} || {Key, Value} <- MetaHeaders].
 
+%% @doc Transform binary keys and values of a proplist into strings.
+%% @spec binary_headers_to_string(Headers::proplist()) -> proplist()
+binary_headers_to_string(Headers) ->
+  binary_headers_to_string(Headers, []).
+
+binary_headers_to_string([], Results) ->
+  lists:reverse(Results);
+binary_headers_to_string([{Key,Value}|Rest], Results) ->
+    binary_headers_to_string(Rest, [{bin_to_string(Key),bin_to_string(Value)}|Results]).
+
 %% Private functions
 
 caseless_get_proplist_value(Key, Proplist) when is_list(Key), is_list(Proplist) ->
@@ -163,6 +173,11 @@ list_to_string(List) when is_list(List) ->
   List;
 list_to_string(_) ->
   "".
+
+bin_to_string(Value) when is_binary(Value) ->
+  binary_to_list(Value);
+bin_to_string(Value) when is_list(Value) ->
+  Value.
 
 query_args_to_string("") ->
   "";
@@ -254,6 +269,10 @@ extract_object_meta_headers_test() ->
     {<<"fruit">>, <<"Cream">>}],
     
   ?assert(ExpectedMetas == extract_object_meta_headers(TestHeaders)),
+  ok.
+
+binary_headers_to_string_test() ->
+  ?assert([{"a","1"},{"b","2"}] == binary_headers_to_string([{"a",<<"1">>},{<<"b">>,"2"}])),
   ok.
   
 -endif.

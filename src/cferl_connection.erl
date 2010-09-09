@@ -246,7 +246,8 @@ do_send_request(BaseUrl, Method, PathAndQuery, Headers, Body)
   when is_list(BaseUrl), is_list(PathAndQuery), is_list(Headers), is_atom(Method), is_binary(Body) ->
     ibrowse:send_req(BaseUrl ++ PathAndQuery,
                      [{"User-Agent", "cferl (CloudFiles Erlang API) v" ++ Version},
-                      {"X-Auth-Token", AuthToken} | Headers],
+                      {"X-Auth-Token", AuthToken} |
+                      cferl_lib:binary_headers_to_string(Headers)],
                       Method,
                       Body).
 

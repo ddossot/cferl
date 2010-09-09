@@ -73,11 +73,11 @@ container_tests(CloudFiles) ->
   ?PRINT_CODE(""),
 
   ?PRINT_CODE("# ContainersDetails is a list of #cf_container_details records"),
-  ?PRINT_CALL([Detail|_]=ContainersDetails),
-  ?PRTFM_CODE("Detail = #cf_container_details{name=~p, bytes=~B, count=~B}",
-              [Detail#cf_container_details.name,
-               Detail#cf_container_details.bytes,
-               Detail#cf_container_details.count]),
+  ?PRINT_CALL([ContainerDetails|_]=ContainersDetails),
+  ?PRTFM_CODE("ContainerDetails = #cf_container_details{name=~p, bytes=~B, count=~B}",
+              [ContainerDetails#cf_container_details.name,
+               ContainerDetails#cf_container_details.bytes,
+               ContainerDetails#cf_container_details.count]),
   ?PRINT_CODE(""),
   
   ?PRINT_CODE("# Retrieve details for a maximum of 5 containers whose names start at cf"),
@@ -85,7 +85,7 @@ container_tests(CloudFiles) ->
   ?PRINT_CODE(""),
   
   ?PRINT_CODE("# Get a container reference by name"),
-  ?PRINT_CALL({ok, Container} = CloudFiles:get_container(Detail#cf_container_details.name)),
+  ?PRINT_CALL({ok, Container} = CloudFiles:get_container(ContainerDetails#cf_container_details.name)),
   ?PRINT_CODE(""),
   
   ?PRINT_CODE("# Get container details from its reference"),
@@ -146,24 +146,72 @@ container_tests(CloudFiles) ->
   {ok, []} = RefreshedContainer:get_objects_details(),
   {ok, []} = RefreshedContainer:get_objects_details(#cf_object_query_args{limit=10}),
   
-  NewObjectName = <<"test.xml">>,
+  ?PRINT_CALL(ObjectName = <<"test.xml">>),
   
   % ensure new object doesn't exist
-  false = RefreshedContainer:object_exists(NewObjectName),
+  false = RefreshedContainer:object_exists(ObjectName),
   
-  % TODO create object
-  % TODO test new object with: get_objects_names/0/1 get_objects_details/0/1 object_exists/1
-  %      match {{Year, Month, Day}, {Hour, Minute, Second, MicroSecond}}
-  % TODO get object
-  % TODO test Obj:name(), Obj:bytes(), Obj:last_modified(), Obj:content_type(), Obj:etag()
-  % TODO test set metadata
-  % TODO test refresh
-  % TODO test get metadata
-  % TEST test write then read data
-  % TEST test write then read data_stream
-  % TODO delete object
+  ?PRINT_CODE("# Create an object *reference*, nothing is sent to the server yet"),
+  ?PRINT_CALL({ok, Object} = RefreshedContainer:create_object(ObjectName)),
+  ?PRINT_CODE("# As expected, it doesn't exist yet"),
+  ?PRINT_CALL(false = RefreshedContainer:object_exists(ObjectName)),
+  ?PRINT_CODE(""),
   
-  % TODO test make dir
+  ?PRINT_CODE("# Write data in the object, which creates it on the server"),
+  ?PRINT_CALL(ok = Object:write_data(<<"<test />">>, <<"application/xml">>)),
+  ?PRINT_CODE("# Now it exists!"),
+  ?PRINT_CALL(true = RefreshedContainer:object_exists(ObjectName)),
+  ?PRINT_CODE(""),
+
+  ?PRINT_CODE("# Set custom meta-data on it"),
+  ?PRINT_CALL(ok = Object:set_metadata([{<<"Key123">>, <<"my 123 Value">>}])),
+  ?PRINT_CODE(""),
+
+  ?PRINT_CODE("# An existing object can be accessed directly from its container"),
+  ?PRINT_CALL({ok, GotObject} = RefreshedContainer:get_object(ObjectName)),
+  ?PRINT_CODE(""),
+  
+  ?PRINT_CODE("# Object names and details can be queried"),
+  ?PRINT_CALL({ok, [ObjectName]} = RefreshedContainer:get_objects_names()),
+  ?PRINT_CALL({ok, [ObjectName]} = RefreshedContainer:get_objects_names(#cf_object_query_args{limit=1})),
+  ?PRINT_CALL({ok, [ObjectDetails]} = RefreshedContainer:get_objects_details()),
+  ?PRTFM_CODE("ObjectDetails = #cf_object_details{name=~p, bytes=~B, last_modified=~1024p, content_type=~s, etag=~s}",
+              [ObjectDetails#cf_object_details.name,
+               ObjectDetails#cf_object_details.bytes,
+               ObjectDetails#cf_object_details.last_modified,
+               ObjectDetails#cf_object_details.content_type,
+               ObjectDetails#cf_object_details.etag]),
+  ?PRINT_CODE(""),
+
+  ?PRINT_CODE("# Read the data back"),
+  ?PRINT_CALL({ok, <<"<test />">>} = Object:read_data()),
+  ?PRINT_CODE(""),
+
+  % TODO test read data with range
+
+  ?PRINT_CODE("# Refresh the object so its attributes and metadata are up to date"),
+  ?PRINT_CALL({ok, RefreshedObject} = Object:refresh()),
+  ?PRINT_CODE(""),
+  
+  ?PRINT_CODE("# Get object attributes"),
+  ?PRINT_CALL(ObjectName = RefreshedObject:name()),
+  ?PRINT_CALL(8 = RefreshedObject:bytes()),
+  ?PRINT_CALL({{D,M,Y},{H,Mi,S}} = RefreshedObject:last_modified()),
+  ?PRINT_CALL(<<"application/xml; charset=UTF-8">> = RefreshedObject:content_type()),
+  ?PRINT_CALL(Etag = RefreshedObject:etag()),
+  ?PRINT_CODE(""),
+  
+  ?PRINT_CODE("# Get custom meta-data"),
+  ?PRINT_CALL([{<<"Key123">>, <<"my 123 Value">>}] = RefreshedObject:metadata()),
+  ?PRINT_CODE(""),
+  
+  % TODO test write_data_stream then read_data_stream
+  
+  ?PRINT_CODE("# Delete the object"),
+  ?PRINT_CALL(ok = RefreshedObject:delete()),
+  ?PRINT_CODE(""),
+  
+  % TODO test ensure_dir
   
   % ensure log retention can be stoped
   ok = RefreshedContainer:set_log_retention(false),
