@@ -249,6 +249,7 @@ get_object_result(ObjectName, {ok, ResponseCode, ResponseHeaders, _})
   },
   
   {ok, cferl_object:new(Connection, THIS, ObjectDetails, get_object_path(ObjectName), ResponseHeaders)};
+
 get_object_result(_, Other) ->
   cferl_lib:error_result(Other).
 

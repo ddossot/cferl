@@ -183,11 +183,11 @@ container_tests(CloudFiles) ->
                ObjectDetails#cf_object_details.etag]),
   ?PRINT_CODE(""),
 
-  ?PRINT_CODE("# Read the data back"),
+  ?PRINT_CODE("# Read the whole data"),
   ?PRINT_CALL({ok, <<"<test />">>} = Object:read_data()),
+  ?PRINT_CODE("# Read the data with an offset and a size"),
+  ?PRINT_CALL({ok, <<"test">>} = Object:read_data(1, 4)),
   ?PRINT_CODE(""),
-
-  % TODO test read data with range
 
   ?PRINT_CODE("# Refresh the object so its attributes and metadata are up to date"),
   ?PRINT_CALL({ok, RefreshedObject} = Object:refresh()),

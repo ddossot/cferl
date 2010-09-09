@@ -14,7 +14,7 @@
 
 -export([name/0, bytes/0, last_modified/0, content_type/0, etag/0,
          metadata/0, set_metadata/1, refresh/0,
-         read_data/0, write_data/2, write_data/3,
+         read_data/0, read_data/2, write_data/2, write_data/3,
          delete/0]).
 
 %% @doc Name of the current object.
@@ -69,17 +69,25 @@ set_metadata_result(Other) ->
 refresh() ->
   Container:get_object(name()).
 
-%% TODO add: read_data(size/offset)
-
 %% @doc Read the data stored for the current object.
 %% @spec read_data() -> {ok, Data::binary()} | Error
 %%   Error = cferl_error()
 read_data() ->
-  RequestHeaders = [], % TODO Range: bytes={size}-{offset+size-1}
+  read_data([]).
+
+%% @doc Read the data stored for the current object, reading 'size' bytes from the 'offset'.
+%% @spec read_data(Offset::integer(), Size::integer()) -> {ok, Data::binary()} | Error
+%%   Error = cferl_error()
+read_data(Offset, Size) when is_integer(Offset), is_integer(Size) ->
+  read_data([{"Range", io_lib:format("bytes=~B-~B", [Offset, Offset+Size-1])}]).
+
+read_data(RequestHeaders) when is_list(RequestHeaders) ->
   Result = Connection:send_storage_request(get, ObjectPath, RequestHeaders, raw),
   read_data_result(Result).
   
-read_data_result({ok, "200", _, ResponseBody}) ->
+read_data_result({ok, ResponseCode, _, ResponseBody})
+  when ResponseCode =:= "200"; ResponseCode =:= "206" ->
+  
   {ok, list_to_binary(ResponseBody)};
 read_data_result(Other) ->
   cferl_lib:error_result(Other).
