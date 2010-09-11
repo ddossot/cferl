@@ -1,8 +1,6 @@
 Rackspace Cloud Files Erlang Client
 ===================================
 
-> Version 0.9 - Currently under initial development!
-
 Description
 -----------
 
@@ -12,13 +10,13 @@ This is an Erlang interface into the Rackspace Cloud Files service. It has been 
 Building
 --------
 
-cferl relies on [rebar](http://bitbucket.org/basho/rebar/wiki/Home) for its build and dependency management and targets Erlang/OTP R13B04 or above.
+*cferl* relies on [rebar](http://bitbucket.org/basho/rebar/wiki/Home) for its build and dependency management and targets Erlang/OTP R13B04 or above.
 
 Simply run:
 
     ./rebar get-deps compile eunit
 
-Optinally, to generate the cferl documentation, run:
+Optinally, to generate the *cferl* documentation, run:
 
     ./rebar delete-deps doc
 
@@ -32,7 +30,9 @@ If you run the integration tests, you'll need your API key and at least one pre-
 Using
 -----
 
-cferl requires that the ssl and ibrowse applications be started prior to using it.
+*cferl* has been developed on R13B04.
+
+*cferl* requires that the ssl and ibrowse applications be started prior to using it.
 
 The following, which is output when running the integration tests, demonstrates a typical usage of the API. Refer to the documentation for the complete reference.
 
