@@ -148,6 +148,24 @@ binary_headers_to_string([], Results) ->
 binary_headers_to_string([{Key,Value}|Rest], Results) ->
     binary_headers_to_string(Rest, [{bin_to_string(Key),bin_to_string(Value)}|Results]).
 
+%% @doc Breaks a file path into a list of sub-directories.
+%% @spec path_to_sub_dirs(Path::path()) -> [Directories::binary()]
+%%   path() = binary() | string()
+path_to_sub_dirs(Path) when is_binary(Path) ->
+  path_to_sub_dirs(binary_to_list(Path));
+
+path_to_sub_dirs(Path) when is_list(Path) ->
+  PathElements = string:tokens(Path, "/"),
+  % drop the last element which must be the file name
+  DirElements = drop_last(PathElements),
+  dir_elements_to_sub_dirs(DirElements, []).
+  
+dir_elements_to_sub_dirs([], Results) ->
+  Results;
+dir_elements_to_sub_dirs(DirElements, Results) ->
+  dir_elements_to_sub_dirs(drop_last(DirElements),
+                           [list_to_binary(string:join(DirElements, "/"))|Results]).
+
 %% Private functions
 
 caseless_get_proplist_value(Key, Proplist) when is_list(Key), is_list(Proplist) ->
@@ -189,7 +207,12 @@ to_lower_case_keys(Proplist) ->
 
 filter_undefined(List) when is_list(List) ->
   lists:filter(fun(Entry) -> Entry =/= undefined end, List).
-  
+
+drop_last([]) ->
+  [];
+drop_last(List) when is_list(List) ->
+  lists:reverse(tl(lists:reverse(List))).
+
 %% Tests
 -ifdef(TEST).
 
@@ -273,6 +296,18 @@ extract_object_meta_headers_test() ->
 
 binary_headers_to_string_test() ->
   ?assert([{"a","1"},{"b","2"}] == binary_headers_to_string([{"a",<<"1">>},{<<"b">>,"2"}])),
+  ok.
+
+path_to_sub_dirs_test() ->
+  ?assert([<<"photo">>,<<"photo/animals">>,<<"photo/animals/dogs">>]
+          == path_to_sub_dirs("photo/animals/dogs/poodle.jpg")),
+  ?assert([<<"photo">>,<<"photo/animals">>,<<"photo/animals/dogs">>]
+          == path_to_sub_dirs(<<"photo/animals/dogs/poodle.jpg">>)),
+  ?assert([<<"photo">>,<<"photo/animals">>]
+          == path_to_sub_dirs(<<"photo/animals/dogs">>)),
+  ?assert([] == path_to_sub_dirs(<<"poodle.jpg">>)),
+  ?assert([] == path_to_sub_dirs("")),
+  ?assert([] == path_to_sub_dirs(<<>>)),
   ok.
   
 -endif.
