@@ -10,7 +10,7 @@
 -author('David Dossot <david@dossot.net>').
 -include("cferl.hrl").
 
--export([start/0]).
+-export([start/0, data_producer_loop/1]).
 -define(PRINT_CODE(Code), io:format("    ~s~n", [Code])).
 -define(PRTFM_CODE(Format, Data), ?PRINT_CODE(io_lib:format(Format, Data))).
 -define(PRINT_CALL(Call),
@@ -205,8 +205,24 @@ container_tests(CloudFiles) ->
   ?PRINT_CALL([{<<"Key123">>, <<"my 123 Value">>}] = RefreshedObject:metadata()),
   ?PRINT_CODE(""),
   
-  % TODO test write_data_stream then read_data_stream
+  ?PRINT_CODE("# Data can be streamed from a generating function/0 returning {ok, Data} | eof"),
+  ?PRINT_CALL({ok, StreamedObject} = RefreshedContainer:create_object(<<"streamed.txt">>)),
+
+  DataPid = spawn_data_producer(),
+  DataFun =
+    fun() ->
+      DataPid ! {self(), get_data},
+      receive
+        Data -> Data
+        after 5000 -> eof
+      end
+    end,
+
+  ?PRINT_CALL(StreamedObject:write_data_stream(DataFun, <<"text/plain">>, [{<<"Content-Length">>, <<"1000">>}])),
+  ?PRINT_CODE(""),
   
+  % TODO read_data_stream
+            
   ?PRINT_CODE("# Delete the object"),
   ?PRINT_CALL(ok = RefreshedObject:delete()),
   ?PRINT_CODE(""),
@@ -216,6 +232,9 @@ container_tests(CloudFiles) ->
   ?PRINT_CALL(true = RefreshedContainer:object_exists(<<"photos">>)),
   ?PRINT_CALL(true = RefreshedContainer:object_exists(<<"photos/plants">>)),
   ?PRINT_CODE(""),
+
+  % delete the streamed object
+  ok = RefreshedContainer:delete_object(<<"streamed.txt">>),
   
   % delete the path elements
   ok = RefreshedContainer:delete_object(<<"photos">>),
@@ -249,4 +268,20 @@ make_new_container_name() ->
                ++ "-"
                ++ HostName,
   list_to_binary(ContainerName).
+
+spawn_data_producer() ->
+  spawn(?MODULE, data_producer_loop, [0]).
+
+data_producer_loop(Index) ->
+  receive
+    {Pid, get_data} when Index < 10 ->
+      Pid ! {ok, string:copies(integer_to_list(Index), 100)},
+      data_producer_loop(Index + 1);
+      
+    {Pid, get_data} ->
+      Pid ! eof;
+      
+    _ ->
+      ok
+  end.
 

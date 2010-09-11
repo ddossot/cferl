@@ -208,7 +208,7 @@ send_storage_request(Method, PathAndQuery, Headers, Accept)
     send_request(StorageUrl, Method, PathAndQuery, Headers, <<>>, Accept).
 
 send_storage_request(Method, PathAndQuery, Headers, Body, Accept)
-  when is_atom(Method), is_list(Headers), is_binary(Body), is_atom(Accept) ->
+  when is_atom(Method), is_list(Headers), is_binary(Body); is_function(Body, 0), is_atom(Accept) ->
     send_request(StorageUrl, Method, PathAndQuery, Headers, Body, Accept).
 
 %% @hidden
@@ -231,11 +231,11 @@ send_request(BaseUrl, Method, PathAndQuery, Headers, Body, Accept)
     send_request(BaseUrl, Method, binary_to_list(PathAndQuery), Headers, Body, Accept);
     
 send_request(BaseUrl, Method, PathAndQuery, Headers, Body, raw)
-  when is_atom(Method), is_list(PathAndQuery), is_list(Headers), is_binary(Body) ->
+  when is_atom(Method), is_list(PathAndQuery), is_list(Headers), is_binary(Body); is_function(Body, 0) ->
     do_send_request(BaseUrl, Method, PathAndQuery, Headers, Body);
     
 send_request(BaseUrl, Method, PathAndQuery, Headers, Body, json)
-  when is_atom(Method), is_list(PathAndQuery), is_list(Headers), is_binary(Body) ->
+  when is_atom(Method), is_list(PathAndQuery), is_list(Headers), is_binary(Body); is_function(Body, 0) ->
     do_send_request(BaseUrl,
                     Method,
                     build_json_query_string(PathAndQuery),
@@ -243,7 +243,7 @@ send_request(BaseUrl, Method, PathAndQuery, Headers, Body, json)
                     Body).
   
 do_send_request(BaseUrl, Method, PathAndQuery, Headers, Body)
-  when is_list(BaseUrl), is_list(PathAndQuery), is_list(Headers), is_atom(Method), is_binary(Body) ->
+  when is_list(BaseUrl), is_list(PathAndQuery), is_list(Headers), is_atom(Method), is_binary(Body); is_function(Body, 0) ->
     ibrowse:send_req(BaseUrl ++ PathAndQuery,
                      [{"User-Agent", "cferl (CloudFiles Erlang API) v" ++ Version},
                       {"X-Auth-Token", AuthToken} |
