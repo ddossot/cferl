@@ -10,6 +10,7 @@
 -define(VERSION_PATH, "/v1.0").
 
 -define(OBJECT_META_HEADER_PREFIX, "X-Object-Meta-").
+-define(DIRECTORY_OBJECT_CONTENT_TYPE, <<"application/directory">>).
 
 -record(cf_account_info, {bytes_used, container_count}).
 

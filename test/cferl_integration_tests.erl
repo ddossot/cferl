@@ -87,7 +87,7 @@ container_tests(CloudFiles) ->
   ?PRINT_CODE("# Get a container reference by name"),
   ?PRINT_CALL({ok, Container} = CloudFiles:get_container(ContainerDetails#cf_container_details.name)),
   ?PRINT_CODE(""),
-  
+
   ?PRINT_CODE("# Get container details from its reference"),
   ?PRINT_CALL(ContainerName = Container:name()),
   ?PRINT_CALL(ContainerBytes = Container:bytes()),
@@ -211,16 +211,24 @@ container_tests(CloudFiles) ->
   ?PRINT_CALL(ok = RefreshedObject:delete()),
   ?PRINT_CODE(""),
   
-  % TODO test ensure_dir
+  ?PRINT_CODE("# Create all the directory elements for a particular object path"),
+  ?PRINT_CALL(ok = RefreshedContainer:ensure_dir(<<"photos/plants/fern.jpg">>)),
+  ?PRINT_CALL(true = RefreshedContainer:object_exists(<<"photos">>)),
+  ?PRINT_CALL(true = RefreshedContainer:object_exists(<<"photos/plants">>)),
+  ?PRINT_CODE(""),
   
-  % ensure log retention can be stoped
+  % delete the path elements
+  ok = RefreshedContainer:delete_object(<<"photos">>),
+  ok = RefreshedContainer:delete_object(<<"photos/plants">>),
+  
+  % ensure log retention can be stopped
   ok = RefreshedContainer:set_log_retention(false),
   
   ?PRINT_CODE("# Make the container private"),
   ?PRINT_CALL(ok = RefreshedContainer:make_private()),
   ?PRINT_CODE(""),
   
-  ?PRINT_CODE("# Delete an existing container"),
+  ?PRINT_CODE("# Delete an existing container (must be empty)"),
   ?PRINT_CALL(ok = RefreshedContainer:delete()),
   ?PRINT_CODE(""),
   

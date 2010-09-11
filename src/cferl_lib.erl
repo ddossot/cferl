@@ -15,7 +15,8 @@
          get_int_header/2, get_boolean_header/2, get_binary_header/2, get_string_header/2,
          container_query_args_to_string/1, cdn_config_to_headers/1,
          object_query_args_to_string/1,
-         url_encode/1, extract_object_meta_headers/1, binary_headers_to_string/1]).
+         url_encode/1, extract_object_meta_headers/1, binary_headers_to_string/1,
+         path_to_sub_dirs/1]).
 
 -define(TEST_HEADERS, [{"int", "123"}, {"bool", "true"}, {"str", "abc"}]).
 

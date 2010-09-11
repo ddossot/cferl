@@ -20,7 +20,8 @@
          make_public/0, make_public/1, make_private/0, set_log_retention/1,
          refresh/0, delete/0,
          get_objects_names/0, get_objects_names/1, get_objects_details/0, get_objects_details/1,
-         object_exists/1, get_object/1, create_object/1, delete_object/1]).
+         object_exists/1, get_object/1, create_object/1, delete_object/1,
+         ensure_dir/1]).
 
 %% @doc Name of the current container.
 %% @spec name() -> binary()
@@ -281,7 +282,26 @@ delete_object_result({ok, "204", _, _}) ->
 delete_object_result(Other) ->
   cferl_lib:error_result(Other).
   
-%% TODO add: ensure_dir/1
+%% @doc Ensure that all the directories exist in an object path.
+%%   Passing <<"photos/plants/fern.jpg">>, will ensure that the <<"photos">> and <<"photos/plants">> directories exist.
+%% @spec ensure_dir(ObjectPath::binary()) -> ok
+ensure_dir(ObjectPath) when is_binary(ObjectPath) ->
+  CreateDirectoryFun =
+    fun(Directory) ->
+      {ok, DirectoryObject} = create_object(Directory),
+      % push the object on the server only if its content-type is not good
+      case DirectoryObject:content_type() of
+        ?DIRECTORY_OBJECT_CONTENT_TYPE ->
+          noop;
+        _ ->
+          ok = DirectoryObject:write_data(<<>>,
+                                          ?DIRECTORY_OBJECT_CONTENT_TYPE,
+                                          [{<<"Content-Length">>, <<"0">>}])
+      end
+    end,
+  
+  lists:foreach(CreateDirectoryFun, cferl_lib:path_to_sub_dirs(ObjectPath)),
+  ok.
 
 %% Private functions
 get_object_path(ObjectName) when is_binary(ObjectName) ->

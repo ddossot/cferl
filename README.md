@@ -106,7 +106,7 @@ The following, which is output when running the integration tests, demonstrates 
     true=RefreshedContainer:is_public().
     
     io:format("~s~n~n",[RefreshedContainer:cdn_url()]).
-    http://c0025137.cdn1.cloudfiles.rackspacecloud.com
+    http://c0025308.cdn1.cloudfiles.rackspacecloud.com
 
     86400=RefreshedContainer:cdn_ttl().
     true=RefreshedContainer:log_retention().
@@ -132,7 +132,7 @@ The following, which is output when running the integration tests, demonstrates 
     {ok,[ObjectName]}=RefreshedContainer:get_objects_names().
     {ok,[ObjectName]}=RefreshedContainer:get_objects_names(#cf_object_query_args{limit=1}).
     {ok,[ObjectDetails]}=RefreshedContainer:get_objects_details().
-    ObjectDetails = #cf_object_details{name=<<"test.xml">>, bytes=8, last_modified={{2010,9,9},{5,31,10}}, content_type=application/xml, etag=4366c359d1a7b9b248fa262775613699}
+    ObjectDetails = #cf_object_details{name=<<"test.xml">>, bytes=8, last_modified={{2010,9,11},{2,56,48}}, content_type=application/xml, etag=4366c359d1a7b9b248fa262775613699}
     
     # Read the whole data
     {ok,<<"<test/>">>}=Object:read_data().
@@ -155,10 +155,15 @@ The following, which is output when running the integration tests, demonstrates 
     # Delete the object
     ok=RefreshedObject:delete().
     
+    # Create all the directory elements for a particular object path
+    ok=RefreshedContainer:ensure_dir(<<"photos/plants/fern.jpg">>).
+    true=RefreshedContainer:object_exists(<<"photos">>).
+    true=RefreshedContainer:object_exists(<<"photos/plants">>).
+    
     # Make the container private
     ok=RefreshedContainer:make_private().
     
-    # Delete an existing container
+    # Delete an existing container (must be empty)
     ok=RefreshedContainer:delete().
     
 
