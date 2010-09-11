@@ -1,5 +1,5 @@
 %%%
-%%% @doc Rackspace Cloud Files Erlang Client
+%%% @doc Management of an account's containers.
 %%% @author David Dossot <david@dossot.net>
 %%%
 %%% See LICENSE for license information.

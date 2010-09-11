@@ -1,4 +1,6 @@
 @title cferl
-@doc <center><img src="cferl.png"/><br/><br/><h1>Rackspace Cloud Files Erlang Client</h1></center>
+@doc <center><img src="../cferl.png"/><br/><br/>
+<h1>Rackspace Cloud Files Erlang Client</h1></center>
+<p>Read the project's <a href="http://github.com/ddossot/cferl/blob/master/README.md">README file</a> for more information.</p>
 @author David Dossot <david@dossot.net>
 @copyright 2010 David Dossot

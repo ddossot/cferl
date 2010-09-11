@@ -1,5 +1,5 @@
 %%%
-%%% @doc Rackspace Cloud Files Erlang Client
+%%% @doc Authentication and connection with Rackspace Cloud Files.
 %%% @author David Dossot <david@dossot.net>
 %%%
 %%% See LICENSE for license information.

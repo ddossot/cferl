@@ -1,5 +1,5 @@
 %%%
-%%% @doc Rackspace Cloud Files Erlang Client
+%%% @doc Handling of a single storage object.
 %%% @author David Dossot <david@dossot.net>
 %%%
 %%% See LICENSE for license information.
