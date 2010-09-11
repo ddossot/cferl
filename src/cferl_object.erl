@@ -15,7 +15,7 @@
 -export([name/0, bytes/0, last_modified/0, content_type/0, etag/0,
          metadata/0, set_metadata/1, refresh/0,
          read_data/0, read_data/2,
-         write_data/2, write_data/3, write_data_stream/2, write_data_stream/3,
+         write_data/2, write_data/3, write_data_stream/3, write_data_stream/4,
          delete/0]).
 
 %% @doc Name of the current object.
@@ -110,17 +110,26 @@ write_data(Data, ContentType, RequestHeaders)
   
   do_write_data(Data, ContentType, RequestHeaders).
   
-% TODO comment
-write_data_stream(DataFun, ContentType)
-  when is_function(DataFun, 0), is_binary(ContentType) ->
+%% @doc Write streamed data for the current object.
+%%   The data generating function must be of arity 0 and return {ok, Data::binary()} | eof.
+%% @spec write_data_stream(DataFun::function(), ContentType::binary(), ContentLength::integer()) -> ok | Error
+%%   Error = {error, invalid_content_length} | {error, mismatched_etag} | cferl_error()
+write_data_stream(DataFun, ContentType, ContentLength)
+  when is_function(DataFun, 0), is_binary(ContentType), is_integer(ContentLength) ->
   
-  write_data_stream(DataFun, ContentType, []).
-
-% TODO comment
-write_data_stream(DataFun, ContentType, RequestHeaders)
-  when is_function(DataFun, 0), is_binary(ContentType), is_list(RequestHeaders) ->
+  write_data_stream(DataFun, ContentType, ContentLength, []).
   
-  do_write_data(DataFun, ContentType, RequestHeaders).
+%% @doc Write streamed data for the current object.
+%%   The data generating function must be of arity 0 and return {ok, Data::binary()} | eof.
+%% @spec write_data_stream(DataFun::function(), ContentType::binary(), ContentLength::integer(), RequestHeaders) -> ok | Error
+%%   Error = {error, invalid_content_length} | {error, mismatched_etag} | cferl_error()
+%%   RequestHeaders = [{Name::binary(), Value::binary()}]
+write_data_stream(DataFun, ContentType, ContentLength, RequestHeaders)
+  when is_function(DataFun, 0), is_binary(ContentType), is_integer(ContentLength), is_list(RequestHeaders) ->
+  
+  do_write_data(DataFun,
+                ContentType,
+                [{<<"Content-Length">>, list_to_binary(integer_to_list(ContentLength))} | RequestHeaders]).
 
 do_write_data(DataSource, ContentType, RequestHeaders) ->
   Result = Connection:send_storage_request(put,

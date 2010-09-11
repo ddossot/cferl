@@ -218,7 +218,7 @@ container_tests(CloudFiles) ->
       end
     end,
 
-  ?PRINT_CALL(StreamedObject:write_data_stream(DataFun, <<"text/plain">>, [{<<"Content-Length">>, <<"1000">>}])),
+  ?PRINT_CALL(StreamedObject:write_data_stream(DataFun, <<"text/plain">>, 1000)),
   ?PRINT_CODE(""),
   
   % TODO read_data_stream
