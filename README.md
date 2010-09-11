@@ -30,8 +30,6 @@ If you run the integration tests, you'll need your API key and at least one pre-
 Using
 -----
 
-*cferl* has been developed on R13B04.
-
 *cferl* requires that the ssl and ibrowse applications be started prior to using it.
 
 The following, which is output when running the integration tests, demonstrates a typical usage of the API. Refer to the documentation for the complete reference.
