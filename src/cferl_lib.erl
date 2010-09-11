@@ -43,12 +43,12 @@ get_int_header(Name, Headers) when is_list(Headers) ->
 
 %% @doc Get a boolean value from a proplist with a case insentive search on key.
 %%   Return false if the key is not found. 
-%% @spec get_int_header(Key::string(), Proplist::list()) -> boolean() 
+%% @spec get_boolean_header(Key::string(), Proplist::list()) -> boolean() 
 get_boolean_header(Name, Headers) when is_list(Headers) ->
   list_to_boolean(caseless_get_proplist_value(Name, Headers)).
 
 %% @doc Get a binary value from a proplist with a case insentive search on key.
-%%   Return <<>> if the key is not found. 
+%%   Return an empty binary if the key is not found. 
 %% @spec get_binary_header(Key::string(), Proplist::list()) -> binary() 
 get_binary_header(Name, Headers) when is_list(Headers) ->
   list_to_bin(caseless_get_proplist_value(Name, Headers)).
@@ -123,12 +123,12 @@ object_query_args_to_string(#cf_object_query_args{marker=Marker, limit=Limit, pr
   query_args_to_string(string:join(filter_undefined(QueryElements), "&")).
 
 %% @doc Encode a binary URL element into a string.
-%% @spec url_encode(Bin::binary()) -> string().
+%% @spec url_encode(Bin::binary()) -> string()
 url_encode(Bin) when is_binary(Bin) ->
   ibrowse_lib:url_encode(binary_to_list(Bin)).
 
 %% @doc Extract the HTTP headers that are object metadata, remove their prefix and turn them into binary.
-%% @spec extract_object_meta_headers(HttpHeaders::proplist()) -> [{Key::binary(),Value::binary()}].
+%% @spec extract_object_meta_headers(HttpHeaders::proplist()) -> [{Key::binary(),Value::binary()}]
 extract_object_meta_headers(HttpHeaders) when is_list(HttpHeaders) ->
   {ok, Re} = re:compile("^" ++ ?OBJECT_META_HEADER_PREFIX, [caseless]),
   

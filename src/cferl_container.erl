@@ -6,9 +6,9 @@
 %%% Copyright (c) 2010 David Dossot
 %%%
 %%% @type cferl_error() = {error, not_found} | {error, unauthorized} | {error, {unexpected_response, Other}}.
-%%% @type cf_container_cdn_config = record(). Record of type cf_container_cdn_config.
+%%% @type cf_container_cdn_config() = record(). Record of type cf_container_cdn_config.
 %%% @type cf_object_query_args() = record(). Record of type cf_object_query_args.
-%%% @type cf_object_details() = record. Record of type cf_object_details.
+%%% @type cf_object_details() = record(). Record of type cf_object_details.
 %%% @type cferl_object() = term(). Reference to the cferl_object parameterized module.
 
 -module(cferl_container, [Connection, ContainerDetails, ContainerPath, CdnDetails]).
@@ -49,12 +49,12 @@ is_public() ->
   proplists:get_value(cdn_enabled, CdnDetails).
 
 %% @doc CDN of the container URL, if it is public.
-%% @spec cdn_url() -> binary().
+%% @spec cdn_url() -> binary()
 cdn_url() ->
   proplists:get_value(cdn_uri, CdnDetails).
 
 %% @doc TTL (in seconds) of the container, if it is public.
-%% @spec cdn_ttl() -> integer().
+%% @spec cdn_ttl() -> integer()
 cdn_ttl() ->
   proplists:get_value(ttl, CdnDetails).
 
@@ -257,7 +257,7 @@ get_object_result(_, Other) ->
 %% @doc Create a reference to a new storage object.
 %%   Nothing is actually created until data gets written in the object.
 %%   If an object with the provided name already exists, a reference to this object is returned.
-%% @spec delete_object(Name::binary) -> {ok, Object} | Error
+%% @spec create_object(Name::binary) -> {ok, Object} | Error
 %%   Object = cferl_object()
 %%   Error = cferl_error()
 create_object(ObjectName) when is_binary(ObjectName) ->
@@ -283,7 +283,7 @@ delete_object_result(Other) ->
   cferl_lib:error_result(Other).
   
 %% @doc Ensure that all the directories exist in an object path.
-%%   Passing <<"photos/plants/fern.jpg">>, will ensure that the <<"photos">> and <<"photos/plants">> directories exist.
+%%   Passing &lt;&lt;"photos/plants/fern.jpg">>, will ensure that the &lt;&lt;"photos">> and &lt;&lt;"photos/plants">> directories exist.
 %% @spec ensure_dir(ObjectPath::binary()) -> ok
 ensure_dir(ObjectPath) when is_binary(ObjectPath) ->
   CreateDirectoryFun =

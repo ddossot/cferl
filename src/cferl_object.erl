@@ -28,7 +28,7 @@ bytes() ->
   ObjectDetails#cf_object_details.bytes.
 
 %% @doc Date and time of the last modification of the current object.
-%% @spec last_modified() -> {Date:date(), Time:time()}
+%% @spec last_modified() -> {Date::date(), Time::time()}
 last_modified() ->
   ObjectDetails#cf_object_details.last_modified.
 
@@ -101,7 +101,7 @@ write_data(Data, ContentType) when is_binary(Data), is_binary(ContentType) ->
 %% @doc Write data for the current object.
 %% @spec write_data(Data::binary(), ContentType::binary(), RequestHeaders) -> ok | Error
 %%   Error = {error, invalid_content_length} | {error, mismatched_etag} | cferl_error()
-%%   RequestHeaders = [{Name::binary(), Value::binary()}].
+%%   RequestHeaders = [{Name::binary(), Value::binary()}]
 write_data(Data, ContentType, RequestHeaders)
   when is_binary(Data), is_binary(ContentType), is_list(RequestHeaders) ->
   

@@ -16,11 +16,11 @@ Simply run:
 
     ./rebar get-deps compile eunit
 
-Optinally, to generate the *cferl* documentation, run:
+Optionally, to generate the *cferl* documentation, run:
 
     ./rebar delete-deps doc
 
-Optinally, to run the integration tests (and generate the code samples visible below), run:
+Optionally, to run the integration tests (and generate the code samples visible below), run:
 
     ./int_tests
 
