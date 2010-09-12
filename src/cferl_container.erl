@@ -163,7 +163,7 @@ get_objects_names(QueryArgs) when is_record(QueryArgs, cf_object_query_args) ->
 get_objects_names_result({ok, "204", _, _}) ->
   {ok, []};
 get_objects_names_result({ok, "200", _, ResponseBody}) ->
-  {ok, [list_to_binary(ObjectName) || ObjectName <- string:tokens(ResponseBody, "\n")]};
+  {ok, [list_to_binary(ObjectName) || ObjectName <- string:tokens(binary_to_list(ResponseBody), "\n")]};
 get_objects_names_result(Other) ->
   cferl_lib:error_result(Other).
 

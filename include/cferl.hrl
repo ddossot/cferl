@@ -9,6 +9,7 @@
 -define(API_BASE_URL, "auth.api.rackspacecloud.com").
 -define(VERSION_PATH, "/v1.0").
 
+-define(DEFAULT_REQUEST_TIMEOUT, 30000).
 -define(OBJECT_META_HEADER_PREFIX, "X-Object-Meta-").
 -define(DIRECTORY_OBJECT_CONTENT_TYPE, <<"application/directory">>).
 

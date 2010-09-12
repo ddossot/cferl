@@ -14,7 +14,7 @@
 
 -export([name/0, bytes/0, last_modified/0, content_type/0, etag/0,
          metadata/0, set_metadata/1, refresh/0,
-         read_data/0, read_data/2,
+         read_data/0, read_data/2, read_data_stream/1, read_data_stream/3,
          write_data/2, write_data/3, write_data_stream/3, write_data_stream/4,
          delete/0]).
 
@@ -74,26 +74,55 @@ refresh() ->
 %% @spec read_data() -> {ok, Data::binary()} | Error
 %%   Error = cferl_error()
 read_data() ->
-  read_data([]).
+  do_read_data([]).
 
 %% @doc Read the data stored for the current object, reading 'size' bytes from the 'offset'.
 %% @spec read_data(Offset::integer(), Size::integer()) -> {ok, Data::binary()} | Error
 %%   Error = cferl_error()
 read_data(Offset, Size) when is_integer(Offset), is_integer(Size) ->
-  read_data([{"Range", io_lib:format("bytes=~B-~B", [Offset, Offset+Size-1])}]).
+  do_read_data([data_range_header(Offset, Size)]).
 
-read_data(RequestHeaders) when is_list(RequestHeaders) ->
+do_read_data(RequestHeaders) when is_list(RequestHeaders) ->
   Result = Connection:send_storage_request(get, ObjectPath, RequestHeaders, raw),
-  read_data_result(Result).
+  do_read_data_result(Result).
   
-read_data_result({ok, ResponseCode, _, ResponseBody})
+do_read_data_result({ok, ResponseCode, _, ResponseBody})
   when ResponseCode =:= "200"; ResponseCode =:= "206" ->
   
-  {ok, list_to_binary(ResponseBody)};
-read_data_result(Other) ->
+  {ok, ResponseBody};
+
+do_read_data_result(Other) ->
   cferl_lib:error_result(Other).
 
-% TODO add: read_data_stream read_data_stream(size/offset)
+%% @doc Read the data stored for the current object and feed by chunks it into a function.
+%%   The function of arity 1 will receive: {error, Cause::term()} | {ok, Data:binary()} | eof
+%% @spec read_data(DataFun::function()) -> ok | Error
+%%   Error = cferl_error()
+read_data_stream(DataFun) when is_function(DataFun, 1) ->
+  do_read_data_stream(DataFun, []).
+
+%% @doc Read the data stored for the current object, reading 'size' bytes from the 'offset', and feed by chunks it into a function.
+%%   The function of arity 1 will receive: {error, Cause::term()} | {ok, Data:binary()} | eof
+%% @spec read_data(DataFun::function(), Offset::integer(), Size::integer()) -> ok | Error
+%%   Error = cferl_error()
+read_data_stream(DataFun, Offset, Size)
+  when is_function(DataFun, 1), is_integer(Offset), is_integer(Size) ->
+  
+  do_read_data_stream(DataFun, [data_range_header(Offset, Size)]).
+
+do_read_data_stream(DataFun, RequestHeaders)
+  when is_function(DataFun, 1), is_list(RequestHeaders) ->
+  
+  Result = Connection:send_storage_request(get, ObjectPath, RequestHeaders, DataFun),
+  do_read_data_stream_result(Result).
+  
+do_read_data_stream_result({ibrowse_req_id, Req_id}) ->
+  ok;
+do_read_data_stream_result(Other) ->
+  cferl_lib:error_result(Other).
+
+data_range_header(Offset, Size) when is_integer(Offset), is_integer(Size) ->
+  {"Range", io_lib:format("bytes=~B-~B", [Offset, Offset+Size-1])}.
 
 %% @doc Write data for the current object.
 %% @spec write_data(Data::binary(), ContentType::binary()) -> ok | Error

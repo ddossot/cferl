@@ -205,11 +205,15 @@ container_tests(CloudFiles) ->
   ?PRINT_CALL([{<<"Key123">>, <<"my 123 Value">>}] = RefreshedObject:metadata()),
   ?PRINT_CODE(""),
   
-  ?PRINT_CODE("# Data can be streamed from a generating function/0 returning {ok, Data} | eof"),
+  ?PRINT_CODE("# Delete the object"),
+  ?PRINT_CALL(ok = RefreshedObject:delete()),
+  ?PRINT_CODE(""),
+  
+  ?PRINT_CODE("# Data can be streamed to the server from a generating function"),
   ?PRINT_CALL({ok, StreamedObject} = RefreshedContainer:create_object(<<"streamed.txt">>)),
 
   DataPid = spawn_data_producer(),
-  DataFun =
+  WriteDataFun =
     fun() ->
       DataPid ! {self(), get_data},
       receive
@@ -218,13 +222,12 @@ container_tests(CloudFiles) ->
       end
     end,
 
-  ?PRINT_CALL(StreamedObject:write_data_stream(DataFun, <<"text/plain">>, 1000)),
+  ?PRINT_CALL(StreamedObject:write_data_stream(WriteDataFun, <<"text/plain">>, 1000)),
   ?PRINT_CODE(""),
   
-  % TODO read_data_stream
-            
-  ?PRINT_CODE("# Delete the object"),
-  ?PRINT_CALL(ok = RefreshedObject:delete()),
+  ?PRINT_CODE("# Data can be streamed from the server to a receiving function"),
+  ReadDataFun = fun(_Data) -> ok end,
+  ?PRINT_CALL(ok = StreamedObject:read_data_stream(ReadDataFun)),
   ?PRINT_CODE(""),
   
   ?PRINT_CODE("# Create all the directory elements for a particular object path"),

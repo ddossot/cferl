@@ -24,7 +24,8 @@
 
 %% Exposed for internal usage
 -export([send_storage_request/3, send_storage_request/4, send_storage_request/5,
-         send_cdn_management_request/3, send_cdn_management_request/4]).
+         send_cdn_management_request/3, send_cdn_management_request/4,
+         async_response_loop/1]).
 
 %% @doc Retrieve the account information.
 %% @spec get_account_info() -> {ok, AccountInfo} | Error
@@ -65,7 +66,7 @@ get_containers_names(QueryArgs) when is_record(QueryArgs, cf_container_query_arg
 get_containers_names_result({ok, "204", _, _}) ->
   {ok, []};
 get_containers_names_result({ok, "200", _, ResponseBody}) ->
-  {ok, [list_to_binary(Name) || Name <- string:tokens(ResponseBody, "\n")]};
+  {ok, [list_to_binary(Name) || Name <- string:tokens(binary_to_list(ResponseBody), "\n")]};
 get_containers_names_result(Other) ->
   cferl_lib:error_result(Other).
 
@@ -193,22 +194,29 @@ get_public_containers_names(all_time) ->
 get_public_containers_names_result({ok, "204", _, _}) ->
   {ok, []};
 get_public_containers_names_result({ok, "200", _, ResponseBody}) ->
-  {ok, [list_to_binary(Name) || Name <- string:tokens(ResponseBody, "\n")]};
+  {ok, [list_to_binary(Name) || Name <- string:tokens(binary_to_list(ResponseBody), "\n")]};
 get_public_containers_names_result(Other) ->
   cferl_lib:error_result(Other).
 
 %% Friend functions
 %% @hidden
 send_storage_request(Method, PathAndQuery, Accept)
-  when is_atom(Method), is_atom(Accept) ->
+  when is_atom(Method),
+       is_atom(Accept) or is_function(Accept, 1) ->
+       
     send_storage_request(Method, PathAndQuery, [], Accept).
 
 send_storage_request(Method, PathAndQuery, Headers, Accept)
-  when is_atom(Method), is_list(Headers), is_atom(Accept) ->
+  when is_atom(Method), is_list(Headers),
+       is_atom(Accept) or is_function(Accept, 1) ->
+       
     send_request(StorageUrl, Method, PathAndQuery, Headers, <<>>, Accept).
 
 send_storage_request(Method, PathAndQuery, Headers, Body, Accept)
-  when is_atom(Method), is_list(Headers), is_binary(Body); is_function(Body, 0), is_atom(Accept) ->
+  when is_atom(Method), is_list(Headers),
+       is_binary(Body) or is_function(Body, 0),
+       is_atom(Accept) or is_function(Accept, 1) ->
+       
     send_request(StorageUrl, Method, PathAndQuery, Headers, Body, Accept).
 
 %% @hidden
@@ -227,29 +235,49 @@ get_container_path(Name) when is_binary(Name) ->
   
 %% Private functions
 send_request(BaseUrl, Method, PathAndQuery, Headers, Body, Accept)
-  when is_atom(Method), is_binary(PathAndQuery), is_list(Headers), is_binary(Body), is_atom(Accept) ->
+  when is_atom(Method), is_binary(PathAndQuery), is_list(Headers), is_binary(Body),
+       is_atom(Accept) or is_function(Accept, 1) ->
+       
     send_request(BaseUrl, Method, binary_to_list(PathAndQuery), Headers, Body, Accept);
     
+send_request(BaseUrl, Method, PathAndQuery, Headers, Body, ResultFun)
+  when is_atom(Method), is_list(PathAndQuery), is_list(Headers),
+       is_binary(Body) or is_function(Body, 0),
+       is_function(ResultFun, 1) ->
+
+    ResultPid = spawn(fun() -> async_response_loop(ResultFun) end), 
+    Options = [{stream_to, {ResultPid, once}}],
+    do_send_request(BaseUrl, Method, PathAndQuery, Headers, Body, Options);
+
 send_request(BaseUrl, Method, PathAndQuery, Headers, Body, raw)
-  when is_atom(Method), is_list(PathAndQuery), is_list(Headers), is_binary(Body); is_function(Body, 0) ->
-    do_send_request(BaseUrl, Method, PathAndQuery, Headers, Body);
+  when is_atom(Method), is_list(PathAndQuery), is_list(Headers),
+       is_binary(Body) or is_function(Body, 0) ->
+       
+    do_send_request(BaseUrl, Method, PathAndQuery, Headers, Body, []);
     
 send_request(BaseUrl, Method, PathAndQuery, Headers, Body, json)
-  when is_atom(Method), is_list(PathAndQuery), is_list(Headers), is_binary(Body); is_function(Body, 0) ->
+  when is_atom(Method), is_list(PathAndQuery), is_list(Headers),
+       is_binary(Body) or is_function(Body, 0) ->
+       
     do_send_request(BaseUrl,
                     Method,
                     build_json_query_string(PathAndQuery),
                     Headers,
-                    Body).
+                    Body,
+                    []).
   
-do_send_request(BaseUrl, Method, PathAndQuery, Headers, Body)
-  when is_list(BaseUrl), is_list(PathAndQuery), is_list(Headers), is_atom(Method), is_binary(Body); is_function(Body, 0) ->
+do_send_request(BaseUrl, Method, PathAndQuery, Headers, Body, Options)
+  when is_list(BaseUrl), is_list(PathAndQuery), is_list(Headers), is_atom(Method),
+       is_binary(Body) or is_function(Body, 0),
+       is_list(Options) ->
+       
     ibrowse:send_req(BaseUrl ++ PathAndQuery,
                      [{"User-Agent", "cferl (CloudFiles Erlang API) v" ++ Version},
                       {"X-Auth-Token", AuthToken} |
                       cferl_lib:binary_headers_to_string(Headers)],
                       Method,
-                      Body).
+                      Body,
+                      [{response_format, binary} | Options]).
 
 build_json_query_string(PathAndQuery) when is_list(PathAndQuery) ->
   PathAndQuery ++
@@ -258,4 +286,38 @@ build_json_query_string(PathAndQuery) when is_list(PathAndQuery) ->
     false -> "?"
   end ++
   "format=json".
+
+%% @hidden
+async_response_loop(ResultFun) when is_function(ResultFun, 1) ->
+  receive
+    {ibrowse_async_headers, Req_id, StatCode, _ResponseHeaders} ->
+      case StatCode of
+        [$2|_] ->
+          stream_next_chunk(ResultFun, Req_id);
+          
+        nomatch ->
+          ResultFun({error, {unexpected_status_code, StatCode}})
+      end;
+      
+    {ibrowse_async_response, _Req_id, Error = {error, _}} ->
+      ResultFun(Error);
+      
+    {ibrowse_async_response, Req_id, Data} ->
+      ResultFun({ok, Data}),
+      stream_next_chunk(ResultFun, Req_id);
+      
+    {ibrowse_async_response_end, _Req_id} ->
+      ResultFun(eof)
+    
+  after ?DEFAULT_REQUEST_TIMEOUT ->
+    ResultFun({error, time_out})
+  end.
+  
+stream_next_chunk(ResultFun, Req_id) ->
+  case ibrowse:stream_next(Req_id) of
+    ok ->
+      async_response_loop(ResultFun);
+    Error ->
+      ResultFun(Error)
+    end.
 
