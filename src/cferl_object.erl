@@ -96,14 +96,14 @@ do_read_data_result(Other) ->
 
 %% @doc Read the data stored for the current object and feed by chunks it into a function.
 %%   The function of arity 1 will receive: {error, Cause::term()} | {ok, Data:binary()} | eof
-%% @spec read_data(DataFun::function()) -> ok | Error
+%% @spec read_data_stream(DataFun::function()) -> ok | Error
 %%   Error = cferl_error()
 read_data_stream(DataFun) when is_function(DataFun, 1) ->
   do_read_data_stream(DataFun, []).
 
 %% @doc Read the data stored for the current object, reading 'size' bytes from the 'offset', and feed by chunks it into a function.
 %%   The function of arity 1 will receive: {error, Cause::term()} | {ok, Data:binary()} | eof
-%% @spec read_data(DataFun::function(), Offset::integer(), Size::integer()) -> ok | Error
+%% @spec read_data_stream(DataFun::function(), Offset::integer(), Size::integer()) -> ok | Error
 %%   Error = cferl_error()
 read_data_stream(DataFun, Offset, Size)
   when is_function(DataFun, 1), is_integer(Offset), is_integer(Size) ->
