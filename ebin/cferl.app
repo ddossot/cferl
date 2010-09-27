@@ -1,7 +1,7 @@
 {application,
       cferl,
         [{description, "Rackspace Cloud Files client application"},
-         {vsn, "1.1"},
+         {vsn, "1.2"},
          {modules, [
                      cferl,
                      cferl_connection,
