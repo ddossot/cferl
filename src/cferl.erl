@@ -12,7 +12,7 @@
 -author('David Dossot <david@dossot.net>').
 -include("cferl.hrl").
 
--export([connect/2]).
+-export([connect/2, connect/3]).
 -define(APPLICATION, cferl).
 
 %% @doc Authenticate and open connection.
@@ -25,10 +25,25 @@ connect(Username, ApiKey) when is_binary(Username), is_binary(ApiKey) ->
   connect(binary_to_list(Username),
           binary_to_list(ApiKey));
 connect(Username, ApiKey) when is_list(Username), is_list(ApiKey) ->
+  AuthUrl = "https://" ++ ?API_BASE_URL ++ ":443" ++ ?VERSION_PATH,
+  connect(Username, ApiKey, AuthUrl).
+
+%% @doc Authenticate and open connection.
+%% @spec connect(Username, ApiKey, AuthUrl) -> {ok, CloudFiles} | Error
+%%   Username = string() | binary()
+%%   ApiKey = string() | binary()
+%%   AuthUrl = string() | binary()
+%%   CloudFiles = cferl_connection()
+%%   Error = cferl_error()
+connect(Username, ApiKey, AuthUrl) when is_binary(Username), is_binary(ApiKey), is_binary(AuthUrl) ->  
+  connect(binary_to_list(Username),
+	  binary_to_list(ApiKey),
+	  binary_to_list(AuthUrl));
+connect(Username, ApiKey, AuthUrl) when is_list(Username), is_list(ApiKey), is_list(AuthUrl) ->
   ensure_started(),
   
   Result = 
-    ibrowse:send_req("https://" ++ ?API_BASE_URL ++ ":443" ++ ?VERSION_PATH,
+    ibrowse:send_req(AuthUrl,
                      [{"X-Auth-User", Username}, {"X-Auth-Key", ApiKey}],
                      get),
                      
