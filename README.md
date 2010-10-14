@@ -40,7 +40,7 @@ The following, which is output when running the integration tests, demonstrates 
     
     # Retrieve the account information record
     {ok,Info}=CloudFiles:get_account_info().
-    Info = #cf_account_info{bytes_used=360, container_count=1}
+    Info = #cf_account_info{bytes_used=360, container_count=3}
     
     # Retrieve names of all existing containers (within the limits imposed by Cloud Files server)
     {ok,Names}=CloudFiles:get_containers_names().
@@ -104,7 +104,7 @@ The following, which is output when running the integration tests, demonstrates 
     true=RefreshedContainer:is_public().
     
     io:format("~s~n~n",[RefreshedContainer:cdn_url()]).
-    http://c0025395.cdn1.cloudfiles.rackspacecloud.com
+    http://c0027258.cdn1.cloudfiles.rackspacecloud.com
 
     86400=RefreshedContainer:cdn_ttl().
     true=RefreshedContainer:log_retention().
@@ -119,6 +119,8 @@ The following, which is output when running the integration tests, demonstrates 
     ok=Object:write_data(<<"<test/>">>,<<"application/xml">>).
     # Now it exists!
     true=RefreshedContainer:object_exists(ObjectName).
+    # And trying to re-create it just returns it
+    {ok,ExistingObject}=RefreshedContainer:create_object(ObjectName).
     
     # Set custom meta-data on it
     ok=Object:set_metadata([{<<"Key123">>,<<"my123Value">>}]).
@@ -130,7 +132,7 @@ The following, which is output when running the integration tests, demonstrates 
     {ok,[ObjectName]}=RefreshedContainer:get_objects_names().
     {ok,[ObjectName]}=RefreshedContainer:get_objects_names(#cf_object_query_args{limit=1}).
     {ok,[ObjectDetails]}=RefreshedContainer:get_objects_details().
-    ObjectDetails = #cf_object_details{name=<<"test.xml">>, bytes=8, last_modified={{2010,9,12},{4,42,48}}, content_type=application/xml, etag=4366c359d1a7b9b248fa262775613699}
+    ObjectDetails = #cf_object_details{name=<<"test.xml">>, bytes=8, last_modified={{2010,10,14},{15,49,22}}, content_type=application/xml, etag=4366c359d1a7b9b248fa262775613699}
     
     # Read the whole data
     {ok,<<"<test/>">>}=Object:read_data().

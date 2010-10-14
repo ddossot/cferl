@@ -162,7 +162,7 @@ container_tests(CloudFiles) ->
   ?PRINT_CODE("# Now it exists!"),
   ?PRINT_CALL(true = RefreshedContainer:object_exists(ObjectName)),
   ?PRINT_CODE("# And trying to re-create it just returns it"),
-  ?PRINT_CALL({ok, Object} = RefreshedContainer:create_object(ObjectName)),
+  ?PRINT_CALL({ok, ExistingObject} = RefreshedContainer:create_object(ObjectName)),
   ?PRINT_CODE(""),
 
   ?PRINT_CODE("# Set custom meta-data on it"),
