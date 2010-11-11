@@ -263,8 +263,7 @@ get_object_result(_, Other) ->
 create_object(ObjectName) when is_binary(ObjectName) ->
   case get_object(ObjectName) of
     {ok, Object} ->
-      Object;
-    
+      {ok, Object};
     _ ->
       ObjectDetails = #cf_object_details{name = ObjectName},
       {ok, cferl_object:new(Connection, THIS, ObjectDetails, get_object_path(ObjectName), [])}
