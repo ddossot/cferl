@@ -5,3 +5,4 @@
 .eunit
 erl_crash.dump
 deps
+ebin
