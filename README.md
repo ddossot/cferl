@@ -14,11 +14,11 @@ Building
 
 Simply run:
 
-    ./rebar get-deps compile eunit
+    rebar get-deps compile eunit
 
 Optionally, to generate the *cferl* documentation, run:
 
-    ./rebar delete-deps doc
+    rebar skip_deps=true doc
 
 Optionally, to run the integration tests (and generate the code samples visible below), run:
 
