@@ -116,7 +116,7 @@ do_read_data_stream(DataFun, RequestHeaders)
   Result = Connection:send_storage_request(get, ObjectPath, RequestHeaders, DataFun),
   do_read_data_stream_result(Result).
   
-do_read_data_stream_result({ibrowse_req_id, Req_id}) ->
+do_read_data_stream_result({ibrowse_req_id, _Req_id}) ->
   ok;
 do_read_data_stream_result(Other) ->
   cferl_lib:error_result(Other).
