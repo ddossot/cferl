@@ -5,11 +5,9 @@
 %%% See LICENSE for license information.
 %%% Copyright (c) 2010 David Dossot
 %%%
-%%% @type cferl_error() = {error, not_found} | {error, unauthorized} | {error, {unexpected_response, Other}}.
 %%% @type cf_container_cdn_config() = record(). Record of type cf_container_cdn_config.
 %%% @type cf_object_query_args() = record(). Record of type cf_object_query_args.
 %%% @type cf_object_details() = record(). Record of type cf_object_details.
-%%% @type cferl_object() = term(). Reference to the cferl_object parameterized module.
 
 -module(cferl_container).
 -author('David Dossot <david@dossot.net>').

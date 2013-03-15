@@ -1,6 +1,7 @@
 %%%
 %%% @doc Authentication and connection with Rackspace Cloud Files.
 %%% @author David Dossot <david@dossot.net>
+%%% @author Tilman Holschuh <tilman.holschuh@gmail.com>
 %%%
 %%% See LICENSE for license information.
 %%% Copyright (c) 2010 David Dossot
