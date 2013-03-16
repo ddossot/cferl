@@ -176,4 +176,4 @@ Read the Rackspace Cloud Files API specification: <http://www.rackspacecloud.com
 
 Contact the author: <david@dossot.net>
 
-## Copyright (c) 2010-2013 David Dossot - MIT License
+### Copyright (c) 2010-2013 David Dossot - MIT License
