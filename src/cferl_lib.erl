@@ -20,6 +20,12 @@
 
 -define(TEST_HEADERS, [{"int", "123"}, {"bool", "true"}, {"str", "abc"}]).
 
+
+%%% @type cferl_error() = {error, not_found} | {error, unauthorized} | {error, {unexpected_response, Other}}.
+-type(cferl_error() :: {error, term()}).
+
+-export_type([cferl_error/0]).
+
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
 -endif.

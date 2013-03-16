@@ -11,28 +11,36 @@
 %%% @type cf_container_details() = record(). Record of type cf_container_details.
 %%% @type cferl_container() = term(). Reference to the cferl_container parameterized module.
 
--module(cferl_connection, [Version, AuthToken, StorageUrl, CdnManagementUrl]).
+-module(cferl_connection).
 -author('David Dossot <david@dossot.net>').
 -include("cferl.hrl").
 
 %% Public API
--export([get_account_info/0,
-         get_containers_names/0, get_containers_names/1,
-         get_containers_details/0, get_containers_details/1,
-         container_exists/1, get_container/1, create_container/1, delete_container/1,
-         get_public_containers_names/1]).
+-export([get_account_info/1,
+         get_containers_names/1, 
+         get_containers_names/2,
+         get_containers_details/1, 
+         get_containers_details/2,
+         container_exists/2, 
+         get_container/2, 
+         create_container/2, 
+         delete_container/2,
+         get_public_containers_names/2]).
 
 %% Exposed for internal usage
--export([send_storage_request/3, send_storage_request/4, send_storage_request/5,
-         send_cdn_management_request/3, send_cdn_management_request/4,
+-export([new/4,
+         send_storage_request/4, 
+         send_storage_request/5, 
+         send_storage_request/6,
+         send_cdn_management_request/4, 
+         send_cdn_management_request/5,
          async_response_loop/1]).
 
+
 %% @doc Retrieve the account information.
-%% @spec get_account_info() -> {ok, AccountInfo} | Error
-%%   AccountInfo = cf_account_info()
-%%   Error = cferl_error()
-get_account_info() ->
-  Result = send_storage_request(head, "", raw),
+-spec get_account_info(#cf_connection{}) -> {ok, #cf_account_info{}} | cferl_lib:cferl_error(). 
+get_account_info(Conn) when ?IS_CONNECTION(Conn) ->
+  Result = send_storage_request(Conn, head, "", raw),
   get_account_info_result(Result).
   
 get_account_info_result({ok, "204", ResponseHeaders, _}) ->
@@ -47,20 +55,17 @@ get_account_info_result(Other) ->
   cferl_lib:error_result(Other).
 
 %% @doc Retrieve all the containers names (within the limits imposed by Cloud Files server).
-%% @spec get_containers_names() -> {ok, [binary()]} | Error
-%%   Error = cferl_error()
-get_containers_names() ->
-  Result = send_storage_request(get, "", raw),
+-spec get_containers_names(#cf_connection{}) -> {ok, [binary()]} | cferl_lib:cferl_error().
+get_containers_names(Conn) when ?IS_CONNECTION(Conn) ->
+  Result = send_storage_request(Conn, get, "", raw),
   get_containers_names_result(Result).
 
 %% @doc Retrieve the containers names filtered by the provided query arguments.
 %%   If you supply the optional limit and marker arguments, the call will return the number of containers specified in limit, starting after the object named in marker.
-%% @spec get_containers_names(QueryArgs) -> {ok, [binary()]} | Error
-%%   QueryArgs = cf_container_query_args()
-%%   Error = cferl_error()
-get_containers_names(QueryArgs) when is_record(QueryArgs, cf_container_query_args) ->
+-spec get_containers_names(#cf_connection{}, #cf_container_query_args{}) -> {ok, [binary()]} | cferl_lib:cferl_error().
+get_containers_names(Conn, QueryArgs) when ?IS_CONNECTION(Conn), is_record(QueryArgs, cf_container_query_args) ->
   QueryString = cferl_lib:container_query_args_to_string(QueryArgs),
-  Result = send_storage_request(get, QueryString, raw),
+  Result = send_storage_request(Conn, get, QueryString, raw),
   get_containers_names_result(Result).
 
 get_containers_names_result({ok, "204", _, _}) ->
@@ -71,18 +76,16 @@ get_containers_names_result(Other) ->
   cferl_lib:error_result(Other).
 
 %% @doc Retrieve all the containers information (within the limits imposed by Cloud Files server).
-%% @spec get_containers_details() -> {ok, [cf_container_details()]} | Error
-%%   Error = cferl_error()
-get_containers_details() ->
-  get_containers_details(#cf_container_query_args{}).
+-spec get_containers_details(#cf_connection{}) -> {ok, [#cf_container_details{}]} | cferl_lib:cferl_error().
+get_containers_details(Conn) when ?IS_CONNECTION(Conn) ->
+  get_containers_details(Conn, #cf_container_query_args{}).
 
 %% @doc Retrieve the containers information filtered by the provided query arguments.
-%% @spec get_containers_details(QueryArgs) -> {ok, [cf_container_details()]} | Error
-%%   QueryArgs = cf_container_query_args()
-%%   Error = cferl_error()
-get_containers_details(QueryArgs) when is_record(QueryArgs, cf_container_query_args) ->
+-spec get_containers_details(#cf_connection{}, #cf_container_query_args{}) -> 
+  {ok, [#cf_container_details{}]} | cferl_lib:cferl_error().
+get_containers_details(Conn, QueryArgs) when ?IS_CONNECTION(Conn), is_record(QueryArgs, cf_container_query_args) ->
   QueryString = cferl_lib:container_query_args_to_string(QueryArgs),
-  Result = send_storage_request(get, QueryString, json),
+  Result = send_storage_request(Conn, get, QueryString, json),
   get_containers_details_result(Result).
 
 get_containers_details_result({ok, "204", _, _}) ->
@@ -104,9 +107,9 @@ get_containers_details_result(Other) ->
   cferl_lib:error_result(Other).
 
 %% @doc Test the existence of a container.
-%% @spec container_exists(Name::binary()) -> true | false
-container_exists(Name) when is_binary(Name) ->
-  Result = send_storage_request(head, get_container_path(Name), raw),
+-spec container_exists(#cf_connection{}, Name::binary()) -> true | false.
+container_exists(Conn, Name) when ?IS_CONNECTION(Conn), is_binary(Name) ->
+  Result = send_storage_request(Conn, head, get_container_path(Name), raw),
   container_exists_result(Result).
 
 container_exists_result({ok, "204", _, _}) ->
@@ -115,26 +118,24 @@ container_exists_result(_) ->
   false.
 
 %% @doc Get a reference to an existing container.
-%% @spec get_container(Name::binary) -> {ok, Container} | Error
-%%   Container = cferl_container()
-%%   Error = cferl_error()
-get_container(Name) when is_binary(Name) ->
-  Result = send_storage_request(head, get_container_path(Name), raw),
-  get_container_result(Name, Result).
+-spec get_container(#cf_connection{}, Name::binary()) -> {ok, #cf_container{}} | cferl_lib:cferl_error(). 
+get_container(Conn, Name) when ?IS_CONNECTION(Conn), is_binary(Name) ->
+  Result = send_storage_request(Conn, head, get_container_path(Name), raw),
+  get_container_result(Conn, Name, Result).
 
-get_container_result(Name, {ok, "204", ResponseHeaders, _}) ->
+get_container_result(Conn, Name, {ok, "204", ResponseHeaders, _}) ->
   ContainerDetails = #cf_container_details{
         name = Name,
         bytes = cferl_lib:get_int_header("x-container-bytes-used", ResponseHeaders),
         count = cferl_lib:get_int_header("x-container-object-count", ResponseHeaders)
       },
-  {ok, CdnDetails} = get_container_cdn_details(Name),
-  {ok, cferl_container:new(THIS, ContainerDetails, get_container_path(Name), CdnDetails)};
-get_container_result(_, Other) ->
+  {ok, CdnDetails} = get_container_cdn_details(Conn, Name),
+  {ok, cferl_container:new(ContainerDetails, get_container_path(Name), CdnDetails)};
+get_container_result(_, _, Other) ->
   cferl_lib:error_result(Other).
 
-get_container_cdn_details(Name) ->
-  Result = send_cdn_management_request(head, get_container_path(Name), raw),
+get_container_cdn_details(Conn, Name) ->
+  Result = send_cdn_management_request(Conn, head, get_container_path(Name), raw),
   get_container_cdn_details_result(Result).
 
 get_container_cdn_details_result({ok, "204", ResponseHeaders, _}) ->
@@ -153,25 +154,24 @@ build_cdn_details_proplist(Headers) ->
   ].
   
 %% @doc Create a new container (name must not be already used).
-%% @spec create_container(Name::binary) -> {ok, Container} | Error
-%%   Container = cferl_container()
-%%   Error = {error, already_existing} | cferl_error()
-create_container(Name) when is_binary(Name) ->
-  Result = send_storage_request(put, get_container_path(Name), raw),
-  create_container_result(Name, Result).
+-spec create_container(#cf_connection{}, Name::binary()) -> 
+  {ok, #cf_container{}} | {error, already_existing} | cferl_lib:cferl_error().
+create_container(Conn, Name) when ?IS_CONNECTION(Conn), is_binary(Name) ->
+  Result = send_storage_request(Conn, put, get_container_path(Name), raw),
+  create_container_result(Conn, Name, Result).
 
-create_container_result(Name, {ok, "201", _, _}) ->
-  get_container(Name);
-create_container_result(_, {ok, "202", _, _}) ->  
+create_container_result(Conn, Name, {ok, "201", _, _}) ->
+  get_container(Conn, Name);
+create_container_result(_, _, {ok, "202", _, _}) ->  
   {error, already_existing};
-create_container_result(_, Other) ->
+create_container_result(_, _, Other) ->
   cferl_lib:error_result(Other).
   
 %% @doc Delete a container (which must be empty).
-%% @spec delete_container(Name::binary) -> ok | Error
+-spec delete_container(#cf_connection{}, Name::binary()) -> ok | {error, not_empty} | cferl_lib:cferl_error().
 %%   Error = {error, not_empty} | cferl_error()
-delete_container(Name) when is_binary(Name) ->
-  Result = send_storage_request(delete, get_container_path(Name), raw),
+delete_container(Conn, Name) when ?IS_CONNECTION(Conn), is_binary(Name) ->
+  Result = send_storage_request(Conn, delete, get_container_path(Name), raw),
   delete_container_result(Result).
 
 delete_container_result({ok, "204", _, _}) ->
@@ -182,13 +182,12 @@ delete_container_result(Other) ->
   cferl_lib:error_result(Other).
 
 %% @doc Retrieve the names of public (CDN-enabled) containers, whether they are still public (active) or happen to have been exposed in the past(all_time).
-%% @spec get_public_containers_names(TimeFilter::active | all_time) -> {ok, [binary()]} | Error
-%%   Error = cferl_error()
-get_public_containers_names(active) ->
-  Result = send_cdn_management_request(get, "?enabled_only=true", raw),
+-spec get_public_containers_names(#cf_connection{}, TimeFilter::active | all_time) -> {ok, [binary()]} | cferl_lib:cferl_error(). 
+get_public_containers_names(Conn, active) when ?IS_CONNECTION(Conn) ->
+  Result = send_cdn_management_request(Conn, get, "?enabled_only=true", raw),
   get_public_containers_names_result(Result);
-get_public_containers_names(all_time) ->
-  Result = send_cdn_management_request(get, "", raw),
+get_public_containers_names(Conn, all_time) when ?IS_CONNECTION(Conn) ->
+  Result = send_cdn_management_request(Conn, get, "", raw),
   get_public_containers_names_result(Result).
 
 get_public_containers_names_result({ok, "204", _, _}) ->
@@ -200,34 +199,58 @@ get_public_containers_names_result(Other) ->
 
 %% Friend functions
 %% @hidden
-send_storage_request(Method, PathAndQuery, Accept)
+-spec new(Version::string(), 
+          AuthToken :: string(), 
+          StorageUrl :: string(),
+          CdnManagementUrl :: string()) -> #cf_connection{}.
+new(Version, AuthToken, StorageUrl, CdnManagementUrl) ->
+  #cf_connection{
+    version            = Version,
+    auth_token         = AuthToken,
+    storage_url        = StorageUrl,
+    cdn_management_url = CdnManagementUrl }.
+
+%% @hidden
+send_storage_request(Connection, Method, PathAndQuery, Accept)
   when is_atom(Method),
        is_atom(Accept) or is_function(Accept, 1) ->
        
-    send_storage_request(Method, PathAndQuery, [], Accept).
+    send_storage_request(Connection, Method, PathAndQuery, [], Accept).
 
-send_storage_request(Method, PathAndQuery, Headers, Accept)
+send_storage_request(Connection, Method, PathAndQuery, Headers, Accept)
   when is_atom(Method), is_list(Headers),
        is_atom(Accept) or is_function(Accept, 1) ->
        
-    send_request(StorageUrl, Method, PathAndQuery, Headers, <<>>, Accept).
+    send_request(Connection#cf_connection.storage_url, 
+                 Method, PathAndQuery, 
+                 handle_headers(Connection, Headers), 
+                 <<>>, Accept).
 
-send_storage_request(Method, PathAndQuery, Headers, Body, Accept)
+send_storage_request(Connection, Method, PathAndQuery, Headers, Body, Accept)
   when is_atom(Method), is_list(Headers),
        is_binary(Body) or is_function(Body, 0),
        is_atom(Accept) or is_function(Accept, 1) ->
        
-    send_request(StorageUrl, Method, PathAndQuery, Headers, Body, Accept).
+    send_request(Connection#cf_connection.storage_url, 
+                 Method, PathAndQuery, 
+                 handle_headers(Connection, Headers), 
+                 Body, Accept).
 
 %% @hidden
-send_cdn_management_request(Method, PathAndQuery, Accept)
+send_cdn_management_request(Connection, Method, PathAndQuery, Accept)
   when is_atom(Method), is_atom(Accept) ->
-    send_request(CdnManagementUrl, Method, PathAndQuery, [], <<>>, Accept).
+    send_request(Connection#cf_connection.cdn_management_url, 
+                 Method, PathAndQuery, 
+                 handle_headers(Connection, []), 
+                 <<>>, Accept).
 
 %% @hidden
-send_cdn_management_request(Method, PathAndQuery, Headers, Accept)
+send_cdn_management_request(Connection, Method, PathAndQuery, Headers, Accept)
   when is_atom(Method), is_list(Headers), is_atom(Accept) ->
-    send_request(CdnManagementUrl, Method, PathAndQuery, Headers, <<>>, Accept).
+    send_request(Connection#cf_connection.cdn_management_url, 
+                 Method, PathAndQuery, 
+                 handle_headers(Connection, Headers), 
+                 <<>>, Accept).
 
 %% @hidden
 get_container_path(Name) when is_binary(Name) ->
@@ -245,7 +268,7 @@ send_request(BaseUrl, Method, PathAndQuery, Headers, Body, ResultFun)
        is_binary(Body) or is_function(Body, 0),
        is_function(ResultFun, 1) ->
 
-    ResultPid = spawn(fun() -> async_response_loop(ResultFun) end), 
+    ResultPid = proc_lib:spawn(fun() -> async_response_loop(ResultFun) end), 
     Options = [{stream_to, {ResultPid, once}}],
     do_send_request(BaseUrl, Method, PathAndQuery, Headers, Body, Options);
 
@@ -272,12 +295,15 @@ do_send_request(BaseUrl, Method, PathAndQuery, Headers, Body, Options)
        is_list(Options) ->
        
     ibrowse:send_req(BaseUrl ++ PathAndQuery,
-                     [{"User-Agent", "cferl (CloudFiles Erlang API) v" ++ Version},
-                      {"X-Auth-Token", AuthToken} |
-                      cferl_lib:binary_headers_to_string(Headers)],
+                      cferl_lib:binary_headers_to_string(Headers),
                       Method,
                       Body,
                       [{response_format, binary} | Options]).
+
+handle_headers(Connection, Headers) ->
+  [{"User-Agent", "cferl (CloudFiles Erlang API) v" ++ Connection#cf_connection.version}, 
+   {"X-Auth-Token", Connection#cf_connection.auth_token} 
+   | Headers].
 
 build_json_query_string(PathAndQuery) when is_list(PathAndQuery) ->
   PathAndQuery ++
